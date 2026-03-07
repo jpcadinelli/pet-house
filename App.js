@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useEffect, useState } from 'react';
+import { appStyles } from './src/shared/styles/app.styles';
 
 export function TelaSegura() {
   const [access, setAccess] = useState(false);
@@ -17,7 +18,7 @@ export function TelaSegura() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={appStyles.container}>
       {access && (
         <Text>Usuário logado com sucesso!</Text>
       )}
@@ -27,7 +28,6 @@ export function TelaSegura() {
 }
 
 export default function App() {
-
   const [biometria, setBiometria] = useState(false);
   const [render, setRender] = useState(false);
 
@@ -46,7 +46,7 @@ export default function App() {
     )
   } else {
     return (
-      <View style={styles.container}>
+      <View style={appStyles.container}>
         <Text>
           {biometria
             ? 'Faça o login com biometria'
@@ -59,12 +59,3 @@ export default function App() {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
