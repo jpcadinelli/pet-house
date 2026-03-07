@@ -3,29 +3,7 @@ import { Text, View, TouchableOpacity } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useEffect, useState } from 'react';
 import { appStyles } from './src/shared/styles/app.styles';
-
-export function TelaSegura() {
-  const [access, setAccess] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const authentication = await LocalAuthentication.authenticateAsync();
-      if (authentication.success)
-        setAccess(true)
-      else
-        setAccess(false)
-    })();
-  }, []);
-
-  return (
-    <View style={appStyles.container}>
-      {access && (
-        <Text>Usuário logado com sucesso!</Text>
-      )}
-    </View>
-  )
-
-}
+import { SecureScreen } from './src/features/auth/screens/SecureScreen';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
@@ -42,7 +20,7 @@ export default function App() {
 
   if (render) {
     return (
-      <TelaSegura />
+      <SecureScreen />
     )
   } else {
     return (
