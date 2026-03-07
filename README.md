@@ -65,6 +65,8 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 ### Etapa 2 - Autenticação
 - [x] Aula sobre autenticação
 - [x] Implementação do login
+- [x] Refatoração da TelaSegura para `src/features/auth/screens/SecureScreen.js`
+- [x] Criação de estilos globais em `src/shared/styles/app.styles.js`
 
 ### Etapa 3 - Próxima entrega
 - [ ] Implementação do logout

@@ -1,33 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useEffect, useState } from 'react';
-
-export function TelaSegura() {
-  const [access, setAccess] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const authentication = await LocalAuthentication.authenticateAsync();
-      if (authentication.success)
-        setAccess(true)
-      else
-        setAccess(false)
-    })();
-  }, []);
-
-  return (
-    <View style={styles.container}>
-      {access && (
-        <Text>Usuário logado com sucesso!</Text>
-      )}
-    </View>
-  )
-
-}
+import { appStyles } from './src/shared/styles/app.styles';
+import { SecureScreen } from './src/features/auth/screens/SecureScreen';
 
 export default function App() {
-
   const [biometria, setBiometria] = useState(false);
   const [render, setRender] = useState(false);
 
@@ -42,29 +20,22 @@ export default function App() {
 
   if (render) {
     return (
-      <TelaSegura />
+      <SecureScreen />
     )
   } else {
     return (
-      <View style={styles.container}>
-        <Text>
+      <View style={appStyles.container}>
+        <Text style={appStyles.bodyText}>
           {biometria
             ? 'Faça o login com biometria'
             : 'Dispositivo n"ao cmpativel com biometrias'
           }
         </Text>
-        <TouchableOpacity onPress={changeRender}><Text>Logar</Text></TouchableOpacity>
+        <TouchableOpacity style={appStyles.button} onPress={changeRender} activeOpacity={0.85}>
+          <Text style={appStyles.buttonText}>Logar</Text>
+        </TouchableOpacity>
         <StatusBar style="auto" />
       </View>
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
