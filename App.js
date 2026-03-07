@@ -17,9 +17,9 @@ export function TelaSegura() {
   }, []);
 
   return (
-    <View>
+    <View style={styles.container}>
       {access && (
-        <Text>Usuário logado co sucesso!</Text>
+        <Text>Usuário logado com sucesso!</Text>
       )}
     </View>
   )
