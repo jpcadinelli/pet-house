@@ -77,5 +77,5 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 | Nome | Matrícula | GitHub |
 |---|---|---|
 | [João Pedro Coelho Cadinelli dos Santos](https://github.com/jpcadinelli) | 202313598 | [@jpcadinelli](https://github.com/jpcadinelli) |
-| [Julio](https://github.com/) | A definir | [GitHub](https://github.com/) |
+| [Julio Fernando Martins Leite](https://github.com/devjuliomartins) | 202310535 | [GitHub](https://github.com/devjuliomartins) |
 | [Pedro](https://github.com/) | A definir | [GitHub](https://github.com/) |
