@@ -57,25 +57,32 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 
 ## Roadmap do Projeto
 
-### Etapa 1 - Definição do projeto
+### Etapa 1 - Definição do projeto 07/03/2026
 - [x] Criação do grupo
 - [x] Escolha do tema do projeto
 - [x] Criação do repositório
 
-### Etapa 2 - Autenticação
+### Etapa 2 - Autenticação 14/03/2026
 - [x] Aula sobre autenticação
 - [x] Implementação do login
 - [x] Refatoração da TelaSegura para `src/features/auth/screens/SecureScreen.js`
 - [x] Criação de estilos globais em `src/shared/styles/app.styles.js`
 - [x] Atualização dos ícones da aplicação para `assets/icon-pet-house.png`
-
-### Etapa 3 - Próxima entrega
 - [ ] Implementação do logout
+- [ ] Refatoração tela inicial
+
+### Etapa 3 - Próxima entrega 21/03/2026
+
+## Documentacao
+
+- [Workflow do projeto](./docs/workflow.md)
+- [Indice da documentacao](./docs/README.md)
+- [Documentacao de features](./docs/features/README.md)
 
 ## Integrantes
 
 | Nome | Matrícula | GitHub |
 |---|---|---|
 | [João Pedro Coelho Cadinelli dos Santos](https://github.com/jpcadinelli) | 202313598 | [@jpcadinelli](https://github.com/jpcadinelli) |
-| [Julio Fernando Martins Leite](https://github.com/devjuliomartins) | 202310535 | [GitHub](https://github.com/devjuliomartins) |
+| [Julio Fernando Martins Leite](https://github.com/devjuliomartins) | 202310535 | [@devjuliomartins](https://github.com/devjuliomartins) |
 | [Pedro](https://github.com/) | A definir | [GitHub](https://github.com/) |
