@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -20,6 +21,7 @@ export function SecureScreen() {
   return (
     <View style={appStyles.container}>
       {access && <Text>Usuário logado com sucesso!</Text>}
+      <StatusBar style="auto" />
     </View>
   );
 }
