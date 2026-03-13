@@ -68,7 +68,7 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] Refatoração da TelaSegura para `src/features/auth/screens/SecureScreen.js`
 - [x] Criação de estilos globais em `src/shared/styles/app.styles.js`
 - [x] Atualização dos ícones da aplicação para `assets/icon-pet-house.png`
-- [ ] Implementação do logout
+- [x] Implementação do logout `src/features/auth/screens/SecureScreen.js` e `/App.js`
 - [x] Refatoração tela inicial `src/features/auth/screens/HomeScreen.js`
 
 ### Etapa 3 - Próxima entrega 21/03/2026
