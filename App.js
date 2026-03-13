@@ -1,9 +1,7 @@
-import { StatusBar } from 'expo-status-bar';
-import { Text, View, TouchableOpacity } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useEffect, useState } from 'react';
-import { appStyles } from './src/shared/styles/app.styles';
 import { SecureScreen } from './src/features/auth/screens/SecureScreen';
+import { HomeScreen } from './src/features/home/screens/HomeScreen';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
@@ -24,18 +22,7 @@ export default function App() {
     )
   } else {
     return (
-      <View style={appStyles.container}>
-        <Text style={appStyles.bodyText}>
-          {biometria
-            ? 'Faça o login com biometria'
-            : 'Dispositivo n"ao cmpativel com biometrias'
-          }
-        </Text>
-        <TouchableOpacity style={appStyles.button} onPress={changeRender} activeOpacity={0.85}>
-          <Text style={appStyles.buttonText}>Logar</Text>
-        </TouchableOpacity>
-        <StatusBar style="auto" />
-      </View>
+      <HomeScreen biometria={biometria} onLogin={changeRender} />
     );
   }
 }
