@@ -2,6 +2,10 @@
 
 Esta pasta reune a documentacao das features do projeto.
 
+## Features documentadas
+
+- [Barra de navegacao inferior](./bottom-navigation.md)
+
 ## Modelo recomendado
 
 Cada feature deve registrar:

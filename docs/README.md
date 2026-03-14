@@ -6,3 +6,4 @@ Este diretorio concentra a documentacao complementar do projeto.
 
 - [Workflow do projeto](./workflow.md)
 - [Documentacao de features](./features/README.md)
+- [Feature: barra de navegacao inferior](./features/bottom-navigation.md)
