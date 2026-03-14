@@ -72,6 +72,9 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] Refatoração tela inicial `src/features/auth/screens/HomeScreen.js`
 
 ### Etapa 3 - Próxima entrega 21/03/2026
+- [ ] Refatoração de Navegação de Telas
+- [ ] Adição Formulário de Login
+- [ ] Adição Checkbox Ativar Biometria
 
 ## Documentacao
 
