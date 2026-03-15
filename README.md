@@ -72,12 +72,17 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] Refatoração tela inicial `src/features/auth/screens/HomeScreen.js`
 
 ### Etapa 3 - Próxima entrega 21/03/2026
+- [ ] Adicao de barra de navegacao inferior
+- [ ] Refatoracao de navegacao da area autenticada
+- [ ] Adição Formulário de Login
+- [ ] Adição Checkbox Ativar Biometria
 
 ## Documentacao
 
 - [Workflow do projeto](./docs/workflow.md)
 - [Indice da documentacao](./docs/README.md)
 - [Documentacao de features](./docs/features/README.md)
+- [Feature: barra de navegacao inferior](./docs/features/bottom-navigation.md)
 
 ## Integrantes
 
@@ -85,4 +90,4 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 |---|---|---|
 | [João Pedro Coelho Cadinelli dos Santos](https://github.com/jpcadinelli) | 202313598 | [@jpcadinelli](https://github.com/jpcadinelli) |
 | [Julio Fernando Martins Leite](https://github.com/devjuliomartins) | 202310535 | [@devjuliomartins](https://github.com/devjuliomartins) |
-| [Pedro Henrique Guimarães Pavanello](https://github.com/devpedropavallo) | 202310824 | [@devpedropavanello](https://github.com/devpedropavallo) |
+| [Pedro Henrique Guimarães Pavanello](https://github.com/devpedropavallo) | 202310824 | [@devpedropavanello](https://github.com/devpedropavanello) |
