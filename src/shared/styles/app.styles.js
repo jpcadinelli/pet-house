@@ -61,7 +61,7 @@ export const appStyles = StyleSheet.create({
     width: 22,
     height: 22,
     borderWidth: 2,
-    borderColor: '#1f6feb',
+    borderColor: '#0B3C78',
     borderRadius: 6,
     marginRight: 12,
     justifyContent: 'center',
@@ -69,7 +69,7 @@ export const appStyles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   checkboxChecked: {
-    backgroundColor: '#1f6feb',
+    backgroundColor: '#0B3C78',
   },
   checkboxIndicator: {
     width: 8,
@@ -79,7 +79,7 @@ export const appStyles = StyleSheet.create({
   },
   checkboxLabel: {
     flex: 1,
-    color: '#334155',
+    color: '#0B3C78',
     fontSize: 15,
   },
   button: {
@@ -88,7 +88,7 @@ export const appStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 12,
-    backgroundColor: '#1f6feb',
+    backgroundColor: '#0B3C78',
     shadowColor: '#0f377a',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.22,
