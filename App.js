@@ -3,23 +3,49 @@ import { Alert } from 'react-native';
 import { useEffect, useState } from 'react';
 import { SecureScreen } from './src/features/auth/screens/SecureScreen';
 import { HomeScreen } from './src/features/home/screens/HomeScreen';
+import {
+  clearAuthSession,
+  getAuthSession,
+  saveAuthSession,
+} from './src/features/auth/storage/authStorage';
+
+const MOCK_EMAIL = 'email@email.com';
+const MOCK_PASSWORD = '1234';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [authMethod, setAuthMethod] = useState(null);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [savedSession, setSavedSession] = useState(null);
 
   useEffect(() => {
     (async () => {
       const compativel = await LocalAuthentication.hasHardwareAsync();
-      const tipos = await LocalAuthentication.supportedAuthenticationTypesAsync();
-      console.log('Tipos de biometria suportados:', tipos);
+      const session = await getAuthSession();
+
       setBiometria(compativel);
+      setSavedSession(session);
+
+      if (!session?.isLoggedIn) {
+        setSessionLoaded(true);
+        return;
+      }
+
+      if (session.biometricEnabled) {
+        setSessionLoaded(true);
+        return;
+      }
+
+      setAuthMethod('email_password');
+      setAuthenticated(true);
+      setSessionLoaded(true);
     })();
   }, []);
 
-  const handleLogin = async () => {
+  const handleBiometricAccess = async () => {
     if (!biometria) {
-      Alert.alert('Erro', 'Seu dispositivo não suporta biometria.');
+      Alert.alert('Erro', 'Seu dispositivo nao suporta biometria.');
       return;
     }
 
@@ -30,19 +56,69 @@ export default function App() {
     });
 
     if (authentication.success) {
+      setAuthMethod('biometria');
       setAuthenticated(true);
     } else {
-      Alert.alert('Falha na autenticação', 'Não foi possível realizar o login.');
+      Alert.alert('Falha na autenticacao', 'Nao foi possivel realizar o login.');
     }
   };
 
-  const handleLogout = () => {
+  useEffect(() => {
+    if (!sessionLoaded || !savedSession?.isLoggedIn || !savedSession?.biometricEnabled || authenticated) {
+      return;
+    }
+
+    handleBiometricAccess();
+  }, [authenticated, savedSession, sessionLoaded]);
+
+  const handleCredentialLogin = async ({ email, password, biometricEnabled }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (normalizedEmail !== MOCK_EMAIL || password !== MOCK_PASSWORD) {
+      Alert.alert('Credenciais invalidas', 'Use o email email@email.com e a senha 1234.');
+      return;
+    }
+
+    const nextSession = {
+      isLoggedIn: true,
+      email: normalizedEmail,
+      biometricEnabled,
+      loginMethod: biometricEnabled ? 'biometria' : 'email_password',
+    };
+
+    await saveAuthSession(nextSession);
+    setSavedSession(nextSession);
+    setAuthMethod('email_password');
+    setAuthenticated(true);
+  };
+
+  const handleLogout = async () => {
+    await clearAuthSession();
+    setSavedSession(null);
+    setAuthMethod(null);
     setAuthenticated(false);
   };
 
-  if (authenticated) {
-    return <SecureScreen onLogout={handleLogout} />;
-  } else {
-    return <HomeScreen biometria={biometria} onLogin={handleLogin} />;
+  if (!sessionLoaded) {
+    return null;
   }
+
+  if (authenticated) {
+    return (
+      <SecureScreen
+        authMethod={authMethod}
+        userEmail={savedSession?.email || MOCK_EMAIL}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  return (
+    <HomeScreen
+      biometria={biometria}
+      hasSavedBiometricLogin={Boolean(savedSession?.isLoggedIn && savedSession?.biometricEnabled)}
+      onBiometricLogin={handleBiometricAccess}
+      onCredentialLogin={handleCredentialLogin}
+    />
+  );
 }
