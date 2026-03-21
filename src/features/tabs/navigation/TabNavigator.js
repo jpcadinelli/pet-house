@@ -79,12 +79,22 @@ export default function TabNavigator({ authMethod, onLogout, userEmail }) {
               style={{
                 width: 60,
                 height: 60,
-                borderRadius: 30,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: focused ? tabTheme.accent : 'transparent',
               }}
             >
+              {focused ? (
+                <View
+                  style={{
+                    position: 'absolute',
+                    width: 60,
+                    height: 60,
+                    borderRadius: 30,
+                    backgroundColor: tabTheme.accent,
+                    transform: [{ translateY: 6 }],
+                  }}
+                />
+              ) : null}
               <Ionicons
                 name={getTabIcon(route.name, focused)}
                 size={focused ? size + 2 : size}
