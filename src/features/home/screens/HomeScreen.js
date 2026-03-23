@@ -22,7 +22,7 @@ export function HomeScreen({
   };
 
   return (
-    <View style={appStyles.container}>
+    <View style={appStyles.screenLogin}>
       <View style={appStyles.authCard}>
         <Text style={appStyles.title}>Entrar</Text>
         <Text style={appStyles.bodyText}>

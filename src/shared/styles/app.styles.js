@@ -6,6 +6,13 @@ export const appStyles = StyleSheet.create({
     backgroundColor: '#f3f7fb',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 0,
+  },
+  screenLogin: {
+    flex: 1,
+    backgroundColor: '#f3f7fb',
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 24,
   },
   authCard: {
