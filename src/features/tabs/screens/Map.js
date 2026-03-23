@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
+import { mapStyles } from '../../../shared/styles/map.styles';
 import {
   ActivityIndicator,
   Pressable,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -118,6 +118,7 @@ export default function Map() {
   const [places, setPlaces] = useState([]);
   const [placesLoading, setPlacesLoading] = useState(true);
   const [placesError, setPlacesError] = useState('');
+  const [isOpen, setIsOpen] = useState(true);
 
   useEffect(() => {
     let isActive = true;
@@ -162,10 +163,10 @@ export default function Map() {
   const hasPlaces = places.length > 0;
 
   return (
-    <View style={styles.container}>
+    <View style={mapStyles.mapContainer}>
       <MapView
         provider={PROVIDER_GOOGLE}
-        style={styles.map}
+        style={mapStyles.map}
         region={mapRegion}
         loadingEnabled
         onRegionChangeComplete={setMapRegion}
@@ -187,102 +188,59 @@ export default function Map() {
         ))}
       </MapView>
 
-      <View pointerEvents="box-none" style={styles.overlay}>
-        <View style={styles.statusCard}>
-          <Text style={styles.statusTitle}>Empreendimentos pet proximos</Text>
-          <Text style={styles.statusText}>Busca centralizada na coordenada fixa da tela em ate 25 km.</Text>
+      <View pointerEvents="box-none" style={mapStyles.overlay}>
+        <View style={mapStyles.statusCard}>
 
-          {placesLoading ? (
-            <View style={styles.statusRow}>
-              <ActivityIndicator color="#0B3C78" />
-              <Text style={styles.statusText}>Buscando resultados no OpenStreetMap...</Text>
-            </View>
-          ) : null}
-
-          {!placesLoading && placesError ? (
-            <Text style={styles.errorText}>{placesError}</Text>
-          ) : null}
-
-          {!placesLoading && !placesError && !hasPlaces ? (
-            <Text style={styles.statusText}>
-              Nenhum empreendimento pet foi encontrado no raio configurado.
+          <Pressable onPress={() => setIsOpen((prev) => !prev)}>
+            <Text style={mapStyles.statusTitle}>
+                📍 Empreendimentos próximos
             </Text>
-          ) : null}
-
-          {!placesLoading && !placesError && hasPlaces ? (
-            <Text style={styles.statusText}>
-              {places.length} resultado(s) encontrado(s) no raio de 25 km.
+            <Text style={{ fontSize: 12, color: '#666' }}>
+              {isOpen ? 'Toque para recolher ▲' : 'Toque para expandir ▼'}
             </Text>
-          ) : null}
-
-          <Pressable style={styles.button} onPress={() => setReloadKey((value) => value + 1)}>
-            <Text style={styles.buttonText}>Atualizar busca</Text>
           </Pressable>
+
+          {isOpen && (
+            <>
+              <Text style={mapStyles.statusText}>
+                Busca centralizada na coordenada fixa da tela em ate 25 km.
+              </Text>
+
+              {placesLoading ? (
+                <View style={mapStyles.statusRow}>
+                  <ActivityIndicator color="#0B3C78" />
+                  <Text style={mapStyles.statusText}>
+                    Buscando resultados no OpenStreetMap...
+                  </Text>
+                </View>
+              ) : null}
+
+              {!placesLoading && placesError ? (
+                <Text style={mapStyles.errorText}>{placesError}</Text>
+              ) : null}
+
+              {!placesLoading && !placesError && !hasPlaces ? (
+                <Text style={mapStyles.statusText}>
+                  Nenhum empreendimento pet foi encontrado no raio configurado.
+                </Text>
+              ) : null}
+
+              {!placesLoading && !placesError && hasPlaces ? (
+                <Text style={mapStyles.statusText}>
+                  {places.length} resultado(s) encontrado(s) no raio de 25 km.
+                </Text>
+              ) : null}
+
+              <Pressable
+                style={mapStyles.button}
+                onPress={() => setReloadKey((value) => value + 1)}
+              >
+                <Text style={mapStyles.buttonText}>Atualizar busca</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F4F8FC',
-  },
-  map: {
-    flex: 1,
-  },
-  overlay: {
-    position: 'absolute',
-    top: 18,
-    left: 18,
-    right: 18,
-  },
-  statusCard: {
-    backgroundColor: 'rgba(255,255,255,0.96)',
-    borderRadius: 18,
-    padding: 16,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
-    elevation: 6,
-  },
-  statusTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 10,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 10,
-  },
-  statusText: {
-    fontSize: 14,
-    color: '#334155',
-    lineHeight: 20,
-    marginTop: 8,
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#B42318',
-    lineHeight: 20,
-    marginTop: 8,
-  },
-  button: {
-    marginTop: 14,
-    alignSelf: 'flex-start',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: '#0B3C78',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-});
