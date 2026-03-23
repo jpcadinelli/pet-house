@@ -73,13 +73,15 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 
 ### Etapa 3 - Próxima entrega 21/03/2026
 - [x] Adicao de barra de navegacao inferior `src/features/tabs/navigation/TabNavigator.js`
-- [x] Refatoracao de navegacao da area autenticada
-- [x] Adição Formulário de Login
-- [x] Adição Checkbox Ativar Biometria
+- [x] Refatoracao de navegacao da area autenticada `src/features/auth/screens/SecureScreen.js`
+- [x] Adição Formulário de Login `src/features/auth/screens/HomeScreen.js`
+- [x] Adição Checkbox Ativar Biometria `src/features/auth/screens/HomeScreen.js`
 
 ### Etapa 4 - Próxima entrega 28/03/2026
-- [ ] Adição do mapa 
-- [ ] Adição dos empreendimentos no mapa
+- [x] Adição do mapa `src/features/tabs/screens/Map.js`
+- [x] Adição dos empreendimentos no mapa `src/features/tabs/screens/Map.js`
+- [x] Refatoracao na area de mapa `src/features/tabs/screens/Map.js` e `src/features/shared/styles/mapStyles.js`
+- [x] Refatoração de organização de código
 - [ ] Utilização da câmera no app
 
 ## Documentacao
