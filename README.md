@@ -85,6 +85,7 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] Utilização da câmera no app `src/features/tabs/screens/Profile.js`
 - [x] Adicionar armazenamento de imagem usando AsyncStorage `src/features/tabs/screens/Profile.js`
 - [x] Adicionar Listagem de Empreendimentos na tela inicial(Home) `src/features/tabs/screens/Home.js`
+- [x] Adição Campo de Busca de empreendimentos e reload manual(pull to refresh)  `src/features/tabs/screens/Home.js`
 
 ## Documentacao
 
