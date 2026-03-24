@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import {View, Text, FlatList, ActivityIndicator, Image} from 'react-native';
+import {View, Text, FlatList, ActivityIndicator, Image, TextInput} from 'react-native';
 import { fetchNearbyPetPlaces } from '../../services/petPlacesService';
 import { homeStyles } from '../../../shared/styles/home.styles';
 
@@ -38,6 +38,8 @@ export default function Home() {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
+  const [filteredPlaces, setFilteredPlaces] = useState([]);
 
   useEffect(() => {
     async function load() {
@@ -47,6 +49,7 @@ export default function Home() {
           DEFAULT_LOCATION.longitude
         );
         setPlaces(data);
+        setFilteredPlaces(data);
       } catch (e) {
         console.log(e);
       } finally {
@@ -56,6 +59,14 @@ export default function Home() {
 
     load();
   }, []);
+
+  useEffect(() => {
+    const filtered = places.filter((place) =>
+      place.title.toLowerCase().includes(search.toLowerCase())
+    );
+
+    setFilteredPlaces(filtered);
+  }, [search, places]);
 
   async function reload() {
     setRefreshing(true);
@@ -72,7 +83,7 @@ export default function Home() {
       setRefreshing(false);
     }
   }
-  
+
   if (loading)
     return (
       <View style={homeStyles.loading}>
@@ -82,8 +93,15 @@ export default function Home() {
 
   return (
     <View style={homeStyles.container}>
+      <TextInput
+        placeholder="Buscar pet shop ou veterinária..."
+        value={search}
+        onChangeText={setSearch}
+        style={homeStyles.searchInput}
+      />
+
       <FlatList
-        data={places}
+        data={filteredPlaces}
         refreshing={refreshing}
         onRefresh={reload}
         keyExtractor={(item) => item.id}
