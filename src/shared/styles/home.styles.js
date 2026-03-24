@@ -4,7 +4,15 @@ export const homeStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',
-    paddingTop: 10,
+    paddingTop: 50,
+  },
+  searchInput: {
+    backgroundColor: '#FFF',
+    margin: 12,
+    padding: 12,
+    borderRadius: 12,
+    fontSize: 14,
+    elevation: 2,
   },
   card: {
     flexDirection: 'row',
