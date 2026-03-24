@@ -57,13 +57,6 @@ export default function Home() {
     load();
   }, []);
 
-  if (loading)
-    return (
-      <View style={homeStyles.loading}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-
   async function reload() {
     setRefreshing(true);
 
@@ -79,6 +72,13 @@ export default function Home() {
       setRefreshing(false);
     }
   }
+  
+  if (loading)
+    return (
+      <View style={homeStyles.loading}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
 
   return (
     <View style={homeStyles.container}>
