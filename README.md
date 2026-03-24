@@ -82,7 +82,8 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] Adição dos empreendimentos no mapa `src/features/tabs/screens/Map.js`
 - [x] Refatoracao na area de mapa `src/features/tabs/screens/Map.js` e `src/features/shared/styles/mapStyles.js`
 - [x] Refatoração de organização de código
-- [ ] Utilização da câmera no app
+- [x] Utilização da câmera no app `src/features/tabs/screens/Profile.js`
+- [x] Adicionar armazenamento de imagem usando AsyncStorage `src/features/tabs/screens/Profile.js`
 
 ## Documentacao
 
