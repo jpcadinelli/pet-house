@@ -1,6 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StatusBar } from 'expo-status-bar';
 
 import { appStyles } from '../../../shared/styles/app.styles';
 import { profileStyles } from '../../../shared/styles/profile.styles'
@@ -10,6 +12,22 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
   const [photoUri, setPhotoUri] = useState(null);
   const cameraRef = useRef(null);
   const [permission, requestPermission] = useCameraPermissions();
+
+  useEffect(() => {
+    async function loadPhoto() {
+      try {
+        const savedPhoto = await AsyncStorage.getItem('userPhoto');
+
+        if (savedPhoto) {
+          setPhotoUri(savedPhoto);
+        }
+      } catch (error) {
+        console.log('Erro ao carregar foto:', error);
+      }
+    }
+
+    loadPhoto();
+  }, []);
 
   if (!permission) {
     return (
@@ -22,8 +40,11 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
   const takePicture = async () => {
     try {
       if (cameraRef.current) {
-        const photo = await cameraRef.current.takePictureAsync();
+        const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
         setPhotoUri(photo.uri);
+
+        await AsyncStorage.setItem('userPhoto', photo.uri);
+
         setCameraOpen(false);
       }
     } catch (error) {
