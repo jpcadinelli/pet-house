@@ -37,6 +37,7 @@ function getStatus() {
 export default function Home() {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -63,10 +64,28 @@ export default function Home() {
       </View>
     );
 
+  async function reload() {
+    setRefreshing(true);
+
+    try {
+      const data = await fetchNearbyPetPlaces(
+        DEFAULT_LOCATION.latitude,
+        DEFAULT_LOCATION.longitude
+      );
+      setPlaces(data);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
   return (
     <View style={homeStyles.container}>
       <FlatList
         data={places}
+        refreshing={refreshing}
+        onRefresh={reload}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           const distance = getDistance(
