@@ -15,6 +15,26 @@ export const profileStyles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  avatarWrapper: {
+    position: 'relative',
+    width: 100,
+    height: 100,
+    marginBottom: 12,
+  },
+  
+  cameraBadge: {
+    position: 'absolute',
+    right: 0,
+    bottom: 6,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#0B3C78',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },  
   smallText: {
     fontSize: 13,
     textAlign: 'center',
@@ -57,18 +77,28 @@ export const profileStyles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
     width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
+  },
+  iconButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(116, 116, 116, 0.46)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   captureButton: {
     backgroundColor: '#fff',
     padding: 16,
     borderRadius: 50,
   },
-  cancelText: {
-    color: '#fff',
-    marginTop: 10,
+  captureText: {
+    fontSize: 22,
+    fontWeight: 'bold',
   },
-    permissionButton: {
+  permissionButton: {
     backgroundColor: '#222',
     paddingVertical: 12,
     paddingHorizontal: 20,

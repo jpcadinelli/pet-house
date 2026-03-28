@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 
 import { appStyles } from '../../../shared/styles/app.styles';
 import { profileStyles } from '../../../shared/styles/profile.styles'
@@ -12,6 +13,7 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
   const [photoUri, setPhotoUri] = useState(null);
   const cameraRef = useRef(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const [cameraFacing, setCameraFacing] = useState('back');
 
   useEffect(() => {
     async function loadPhoto() {
@@ -52,6 +54,10 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
     }
   };
 
+  const toggleCameraFacing = () => {
+    setCameraFacing((current) => (current === 'back' ? 'front' : 'back'));
+  };
+
   if (cameraOpen) {
     if (!permission.granted) {
       return (
@@ -76,20 +82,19 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
 
     return (
       <View style={profileStyles.cameraContainer}>
-        <CameraView style={{ flex: 1 }} ref={cameraRef} facing="back" />
+        <CameraView style={{ flex: 1 }} ref={cameraRef} facing={cameraFacing} />
 
         <View style={profileStyles.cameraButtons}>
-          <TouchableOpacity
-            onPress={takePicture}
-            style={profileStyles.captureButton}
-          >
-            <Text>Tirar foto</Text>
+          <TouchableOpacity style={profileStyles.iconButton} onPress={toggleCameraFacing}>
+            <Ionicons name="camera-reverse" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => setCameraOpen(false)}>
-            <Text style={profileStyles.cancelText}>
-              Cancelar
-            </Text>
+          <TouchableOpacity onPress={takePicture} style={profileStyles.captureButton} >
+            <Text style={profileStyles.captureText}>Tirar Foto</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={profileStyles.iconButton} onPress={() => setCameraOpen(false)}>
+            <Ionicons name="close" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -116,6 +121,9 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
             }}
             style={profileStyles.avatar}
           />
+          <View style={profileStyles.cameraBadge}>
+            <Ionicons name="camera" size={14} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
 
         <Text style={appStyles.title}>Meu Perfil</Text>
