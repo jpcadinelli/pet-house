@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,9 +42,12 @@ function renderTabIcon(routeName, focused, color, size) {
 }
 
 export default function TabNavigator({ authMethod, onLogout, userEmail }) {
+  const [isProfileCameraOpen, setIsProfileCameraOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isCompactTab = width < COMPACT_TAB_BREAKPOINT;
+  const tabBarHeight = (isCompactTab ? styles.tabBarCompact.height : styles.tabBar.height) + insets.bottom;
+  const tabBarPaddingBottom = Math.max(insets.bottom, isCompactTab ? 8 : 12);
 
   return (
     <NavigationContainer>
@@ -61,9 +65,10 @@ export default function TabNavigator({ authMethod, onLogout, userEmail }) {
             styles.tabBar,
             isCompactTab && styles.tabBarCompact,
             {
-              height: (isCompactTab ? styles.tabBarCompact.height : styles.tabBar.height) + insets.bottom,
-              paddingBottom: Math.max(insets.bottom, isCompactTab ? 8 : 12),
+              height: tabBarHeight,
+              paddingBottom: tabBarPaddingBottom,
             },
+            route.name === 'Perfil' && isProfileCameraOpen && styles.tabBarHidden,
           ],
           tabBarItemStyle: [
             styles.tabItem,
@@ -96,7 +101,12 @@ export default function TabNavigator({ authMethod, onLogout, userEmail }) {
 
         <Tab.Screen name="Perfil">
           {() => (
-            <Profile authMethod={authMethod} onLogout={onLogout} userEmail={userEmail} />
+            <Profile
+              authMethod={authMethod}
+              onLogout={onLogout}
+              onCameraVisibilityChange={setIsProfileCameraOpen}
+              userEmail={userEmail}
+            />
           )}
         </Tab.Screen>
       </Tab.Navigator>

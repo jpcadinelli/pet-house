@@ -8,7 +8,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { appStyles } from '../../../shared/styles/app.styles';
 import { profileStyles } from '../../../shared/styles/profile.styles'
 
-export default function Profile({ authMethod, onLogout, userEmail }) {
+export default function Profile({
+  authMethod,
+  onLogout,
+  onCameraVisibilityChange,
+  userEmail,
+}) {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [photoUri, setPhotoUri] = useState(null);
   const cameraRef = useRef(null);
@@ -30,6 +35,14 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
 
     loadPhoto();
   }, []);
+
+  useEffect(() => {
+    onCameraVisibilityChange?.(cameraOpen);
+
+    return () => {
+      onCameraVisibilityChange?.(false);
+    };
+  }, [cameraOpen, onCameraVisibilityChange]);
 
   if (!permission) {
     return (
