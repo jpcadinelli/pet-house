@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 
 import { appStyles } from '../../../shared/styles/app.styles';
 import { profileStyles } from '../../../shared/styles/profile.styles'
@@ -116,6 +117,9 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
             }}
             style={profileStyles.avatar}
           />
+          <View style={profileStyles.cameraBadge}>
+            <Ionicons name="camera" size={14} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
 
         <Text style={appStyles.title}>Meu Perfil</Text>
