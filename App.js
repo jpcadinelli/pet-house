@@ -1,5 +1,6 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Alert } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { SecureScreen } from './src/features/auth/screens/SecureScreen';
 import { HomeScreen } from './src/features/home/screens/HomeScreen';
@@ -105,20 +106,24 @@ export default function App() {
 
   if (authenticated) {
     return (
-      <SecureScreen
-        authMethod={authMethod}
-        userEmail={savedSession?.email || MOCK_EMAIL}
-        onLogout={handleLogout}
-      />
+      <SafeAreaProvider>
+        <SecureScreen
+          authMethod={authMethod}
+          userEmail={savedSession?.email || MOCK_EMAIL}
+          onLogout={handleLogout}
+        />
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <HomeScreen
-      biometria={biometria}
-      hasSavedBiometricLogin={Boolean(savedSession?.isLoggedIn && savedSession?.biometricEnabled)}
-      onBiometricLogin={handleBiometricAccess}
-      onCredentialLogin={handleCredentialLogin}
-    />
+    <SafeAreaProvider>
+      <HomeScreen
+        biometria={biometria}
+        hasSavedBiometricLogin={Boolean(savedSession?.isLoggedIn && savedSession?.biometricEnabled)}
+        onBiometricLogin={handleBiometricAccess}
+        onCredentialLogin={handleCredentialLogin}
+      />
+    </SafeAreaProvider>
   );
 }
