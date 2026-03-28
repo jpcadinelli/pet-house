@@ -61,7 +61,7 @@ export function HomeScreen({
           <Text style={appStyles.checkboxLabel}>
             {biometria
               ? 'Habilitar entrada com biometria'
-              : 'Biometria indisponivel neste dispositivo'}
+              : 'Biometria indisponível neste dispositivo'}
           </Text>
         </TouchableOpacity>
 
@@ -82,8 +82,8 @@ export function HomeScreen({
 
       <Text style={appStyles.helperText}>
         {biometria
-          ? 'Ao marcar a opcao, a proxima abertura podera autenticar com biometria.'
-          : 'Seu dispositivo nao e compativel com biometria no momento.'}
+          ? 'Ao marcar a opção, a próxima abertura poderá autenticar com biometria.'
+          : 'Seu dispositivo não é compatível com biometria no momento.'}
       </Text>
 
       <StatusBar style="auto" />
