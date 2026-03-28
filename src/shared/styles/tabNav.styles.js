@@ -34,6 +34,9 @@ export const styles = StyleSheet.create({
     paddingTop: 6,
     paddingHorizontal: 8,
   },
+  tabBarHidden: {
+    display: 'none',
+  },
   tabItem: {
     flex: 1,
     minWidth: 0,
