@@ -1,7 +1,8 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Home from '../screens/Home';
 import Map from '../screens/Map';
@@ -10,6 +11,7 @@ import Profile from '../screens/Profile';
 import { styles, tabTheme } from '../../../shared/styles/tabNav.styles';
 
 const Tab = createBottomTabNavigator();
+const COMPACT_TAB_BREAKPOINT = 360;
 
 function getTabIcon(routeName, focused) {
   const iconMap = {
@@ -21,34 +23,71 @@ function getTabIcon(routeName, focused) {
   return iconMap[routeName] ?? 'ellipse';
 }
 
-export default function TabNavigator({ authMethod, onLogout, userEmail }) {
+function renderTabIcon(routeName, focused, color, size) {
   return (
-    <NavigationContainer> 
+    <View
+      style={[
+        styles.iconBadge,
+        focused ? styles.iconBadgeActive : styles.iconBadgeInactive,
+      ]}
+    >
+      <Ionicons
+        name={getTabIcon(routeName, focused)}
+        size={focused ? 37 : 35}
+        color={color}
+      />
+    </View>
+  );
+}
+
+export default function TabNavigator({ authMethod, onLogout, userEmail }) {
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isCompactTab = width < COMPACT_TAB_BREAKPOINT;
+
+  return (
+    <NavigationContainer>
       <Tab.Navigator
         initialRouteName="Mapa"
         screenOptions={({ route }) => ({
           headerShown: false,
           sceneStyle: styles.scene,
-          tabBarShowLabel: true,
+          tabBarShowLabel: !isCompactTab,
           tabBarHideOnKeyboard: true,
           tabBarActiveTintColor: tabTheme.activeTint,
           tabBarInactiveTintColor: tabTheme.inactiveTint,
-          tabBarStyle: styles.tabBar,
-          tabBarItemStyle: styles.tabItem,
+          tabBarInactiveBackgroundColor: tabTheme.inactiveItemBackground,
+          tabBarStyle: [
+            styles.tabBar,
+            isCompactTab && styles.tabBarCompact,
+            {
+              height: (isCompactTab ? styles.tabBarCompact.height : styles.tabBar.height) + insets.bottom,
+              paddingBottom: Math.max(insets.bottom, isCompactTab ? 8 : 12),
+            },
+          ],
+          tabBarItemStyle: [
+            styles.tabItem,
+            isCompactTab && styles.tabItemCompact,
+          ],
+          tabBarIconStyle: isCompactTab ? styles.tabIconStyleCompact : styles.tabIconStyle,
           tabBarLabelStyle: styles.tabLabel,
-          tabBarIconStyle: styles.tabIconStyle,
-          
-          tabBarIcon: ({ color, focused, size }) => (
-            <View style={styles.iconContainer}>
-              {focused && <View style={styles.activeBackground} />}
-                
-              <Ionicons
-                name={getTabIcon(route.name, focused)}
-                size={focused ? size + 2 : size}
-                color={color}
-              />
-            </View>
+          tabBarLabel: ({ focused, color }) => (
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.9}
+              allowFontScaling={false}
+              style={[
+                styles.tabLabel,
+                focused ? styles.tabLabelActive : styles.tabLabelInactive,
+                { color },
+              ]}
+            >
+              {route.name}
+            </Text>
           ),
+          tabBarIcon: ({ color, focused, size }) =>
+            renderTabIcon(route.name, focused, color, size),
         })}
       >
         <Tab.Screen name="Inicio" component={Home} />

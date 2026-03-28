@@ -8,6 +8,8 @@ export const tabTheme = {
   accent: '#84BE12',
   border: '#1A5BAA',
   shadow: '#06264D',
+  inactiveItemBackground: 'transparent',
+  inactiveIconBackground: 'rgba(255, 255, 255, 0.06)',
 };
 
 export const styles = StyleSheet.create({
@@ -15,51 +17,71 @@ export const styles = StyleSheet.create({
     backgroundColor: tabTheme.background,
   },
   tabBar: {
-    position: 'absolute',
-    marginHorizontal: 24,
-    bottom: 18,
-    height: 62,
-    marginHorizontal: 24,
-
-    paddingTop: 10,
-    paddingBottom: 10,
-    
-    borderTopWidth: 0,
-    borderWidth: 1,
+    height: 78,
+    paddingTop: 8,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
     borderColor: tabTheme.border,
-    borderRadius: 28,
     backgroundColor: tabTheme.tabBarBackground,
-
     shadowColor: tabTheme.shadow,
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.22,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 14,
+  },
+  tabBarCompact: {
+    height: 64,
+    paddingTop: 6,
+    paddingHorizontal: 8,
   },
   tabItem: {
-    marginHorizontal: 6,
-    borderRadius: 20,
-  },
-  tabLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: -4,
-  },
-  tabIconStyle: {
-    marginTop: -4,
-  },
-  iconContainer: {
-    width: 60,
-    height: 60,
+    flex: 1,
+    minWidth: 0,
+    marginHorizontal: 4,
+    borderRadius: 18,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  activeBackground: {
-    position: 'absolute',
-    width: 52,
-    height: 52,
-    borderRadius: 30,
+  tabItemCompact: {
+    marginHorizontal: 2,
+    paddingVertical: 4,
+  },
+  tabIconStyle: {
+    marginBottom: 17,
+  },
+  tabIconStyleCompact: {
+    marginBottom: 0,
+  },
+  tabLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 13,
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
+  tabLabelActive: {
+    color: tabTheme.activeTint,
+  },
+  tabLabelInactive: {
+    color: tabTheme.inactiveTint,
+  },
+  iconBadge: {
+    width: 55,
+    height: 55,
+    borderRadius: '50%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBadgeActive: {
     backgroundColor: tabTheme.accent,
-    transform: [{ translateY: 6 }],
+    shadowColor: tabTheme.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  iconBadgeInactive: {
+    backgroundColor: tabTheme.inactiveIconBackground,
   },
 });

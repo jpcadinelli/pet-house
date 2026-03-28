@@ -62,7 +62,7 @@ function getPlaceDescription(tags = {}) {
   }
 
   if (tags.amenity === 'veterinary') {
-    return 'Clinica veterinaria';
+    return 'Clínica veterinária';
   }
 
   return 'Empreendimento pet';
@@ -104,7 +104,7 @@ async function fetchNearbyPetPlaces({ latitude, longitude }) {
   });
 
   if (!response.ok) {
-    throw new Error('Nao foi possivel consultar os empreendimentos pet proximos.');
+    throw new Error('Não foi possível consultar os empreendimentos pet próximos.');
   }
 
   const data = await response.json();
@@ -144,7 +144,7 @@ export default function Map() {
         setPlacesError(
           error instanceof Error
             ? error.message
-            : 'Nao foi possivel carregar empreendimentos pet proximos.',
+            : 'Não foi possível carregar empreendimentos pet próximos.',
         );
       } finally {
         if (isActive) {
@@ -174,7 +174,7 @@ export default function Map() {
         <Marker
           coordinate={DEFAULT_LOCATION}
           title="Centro da busca"
-          description="Ponto usado para buscar empreendimentos pet em ate 25 km"
+          description="Ponto usado para buscar empreendimentos pet em até 25 km"
           pinColor="#0B3C78"
         />
 
@@ -202,10 +202,6 @@ export default function Map() {
 
           {isOpen && (
             <>
-              <Text style={mapStyles.statusText}>
-                Busca centralizada na coordenada fixa da tela em ate 25 km.
-              </Text>
-
               {placesLoading ? (
                 <View style={mapStyles.statusRow}>
                   <ActivityIndicator color="#0B3C78" />
