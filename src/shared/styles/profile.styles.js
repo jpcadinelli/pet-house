@@ -81,16 +81,24 @@ export const profileStyles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
   },
+  iconButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(116, 116, 116, 0.46)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   captureButton: {
     backgroundColor: '#fff',
     padding: 16,
     borderRadius: 50,
   },
-  cancelText: {
-    color: '#fff',
-    marginTop: 10,
+  captureText: {
+    fontSize: 22,
+    fontWeight: 'bold',
   },
-    permissionButton: {
+  permissionButton: {
     backgroundColor: '#222',
     paddingVertical: 12,
     paddingHorizontal: 20,

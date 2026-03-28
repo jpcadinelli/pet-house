@@ -85,18 +85,16 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
         <CameraView style={{ flex: 1 }} ref={cameraRef} facing={cameraFacing} />
 
         <View style={profileStyles.cameraButtons}>
-          <TouchableOpacity onPress={toggleCameraFacing}>
-            <Text style={profileStyles.cancelText}>Trocar câmera</Text>
+          <TouchableOpacity style={profileStyles.iconButton} onPress={toggleCameraFacing}>
+            <Ionicons name="camera-reverse" size={24} color="#FFFFFF" />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={takePicture} style={profileStyles.captureButton} >
-            <Text>Tirar foto</Text>
+            <Text style={profileStyles.captureText}>Tirar Foto</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => setCameraOpen(false)}>
-            <Text style={profileStyles.cancelText}>
-              Cancelar
-            </Text>
+          <TouchableOpacity style={profileStyles.iconButton} onPress={() => setCameraOpen(false)}>
+            <Ionicons name="close" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
