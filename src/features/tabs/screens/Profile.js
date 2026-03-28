@@ -13,6 +13,7 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
   const [photoUri, setPhotoUri] = useState(null);
   const cameraRef = useRef(null);
   const [permission, requestPermission] = useCameraPermissions();
+  const [cameraFacing, setCameraFacing] = useState('back');
 
   useEffect(() => {
     async function loadPhoto() {
@@ -53,6 +54,10 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
     }
   };
 
+  const toggleCameraFacing = () => {
+    setCameraFacing((current) => (current === 'back' ? 'front' : 'back'));
+  };
+
   if (cameraOpen) {
     if (!permission.granted) {
       return (
@@ -77,13 +82,14 @@ export default function Profile({ authMethod, onLogout, userEmail }) {
 
     return (
       <View style={profileStyles.cameraContainer}>
-        <CameraView style={{ flex: 1 }} ref={cameraRef} facing="back" />
+        <CameraView style={{ flex: 1 }} ref={cameraRef} facing={cameraFacing} />
 
         <View style={profileStyles.cameraButtons}>
-          <TouchableOpacity
-            onPress={takePicture}
-            style={profileStyles.captureButton}
-          >
+          <TouchableOpacity onPress={toggleCameraFacing}>
+            <Text style={profileStyles.cancelText}>Trocar câmera</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={takePicture} style={profileStyles.captureButton} >
             <Text>Tirar foto</Text>
           </TouchableOpacity>
 

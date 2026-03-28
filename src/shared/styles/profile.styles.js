@@ -77,6 +77,8 @@ export const profileStyles = StyleSheet.create({
     position: 'absolute',
     bottom: 40,
     width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     alignItems: 'center',
   },
   captureButton: {
