@@ -87,6 +87,17 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] Adicionar Listagem de Empreendimentos na tela inicial(Home) `src/features/tabs/screens/Home.js`
 - [x] Adição Campo de Busca de empreendimentos e reload manual(pull to refresh)  `src/features/tabs/screens/Home.js`
 
+### Etapa 5 - Entrega P1 11/04/2026
+- [ ] Ajustar bugs IOS
+- [ ] Ajustar tab navigator
+- [ ] Alterar nome do carregamento para Pet House e garantir carregamento do ícone 
+- [ ] Carregar tela de início ao abrir o app
+- [ ] Trocar disposição da tela de início para o meio e mapa para esquerda
+- [ ] Verificar código de chamada para API (duplicidade)
+- [ ] Adicionar scrolling na tela de início
+- [ ] Adicionar indicador de foto na imagem de perfil, ícone de câmera pequeno
+- [ ] Pegar localização exata do usuário com gps e abrir no local do mapa correto
+
 ## Documentacao
 
 - [Workflow do projeto](./docs/workflow.md)
