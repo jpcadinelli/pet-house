@@ -88,7 +88,7 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] Adição Campo de Busca de empreendimentos e reload manual(pull to refresh)  `src/features/tabs/screens/Home.js`
 
 ### Etapa 5 - Entrega P1 11/04/2026
-- [ ] `Pedro` Ajustar bugs IOS
+- [x] `Pedro` Ajustar bugs IOS
 - [x] `JP` Ajustar tab navigator
 - [ ] `Julio` Alterar nome do carregamento para Pet House e garantir carregamento do ícone 
 - [ ] `Julio` Carregar tela de início ao abrir o app
