@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { fetchNearbyPetPlaces } from '../../services/petPlacesService';
@@ -24,11 +24,21 @@ function createRegion({ latitude, longitude }) {
 
 export default function Map() {
   const [reloadKey, setReloadKey] = useState(0);
-  const [mapRegion] = useState(createRegion(DEFAULT_LOCATION));
+  const [searchLocation, setSearchLocation] = useState(DEFAULT_LOCATION);
+  const [isMapReady, setIsMapReady] = useState(false);
   const [places, setPlaces] = useState([]);
   const [placesLoading, setPlacesLoading] = useState(true);
   const [placesError, setPlacesError] = useState('');
   const [isOpen, setIsOpen] = useState(true);
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    if (!isMapReady) {
+      return;
+    }
+
+    mapRef.current?.animateToRegion(createRegion(searchLocation), 800);
+  }, [isMapReady, searchLocation]);
 
   useEffect(() => {
     let isActive = true;
@@ -39,8 +49,8 @@ export default function Map() {
 
       try {
         const nearbyPlaces = await fetchNearbyPetPlaces(
-          DEFAULT_LOCATION.latitude,
-          DEFAULT_LOCATION.longitude,
+          searchLocation.latitude,
+          searchLocation.longitude,
           { forceRefresh: reloadKey > 0 }
         );
 
@@ -57,7 +67,7 @@ export default function Map() {
         setPlacesError(
           error instanceof Error
             ? error.message
-            : 'Nao foi possivel carregar empreendimentos pet proximos.'
+            : 'Não foi possível carregar empreendimentos pet próximos.'
         );
       } finally {
         if (isActive) {
@@ -71,22 +81,24 @@ export default function Map() {
     return () => {
       isActive = false;
     };
-  }, [reloadKey]);
+  }, [reloadKey, searchLocation.latitude, searchLocation.longitude]);
 
   const hasPlaces = places.length > 0;
 
   return (
     <View style={mapStyles.mapContainer}>
       <MapView
+        ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={mapStyles.map}
-        initialRegion={mapRegion}
+        initialRegion={createRegion(DEFAULT_LOCATION)}
+        onMapReady={() => setIsMapReady(true)}
         loadingEnabled
       >
         <Marker
-          coordinate={DEFAULT_LOCATION}
+          coordinate={searchLocation}
           title="Centro da busca"
-          description="Ponto usado para buscar empreendimentos pet em ate 25 km"
+          description="Ponto usado para buscar empreendimentos pet em até 25 km"
           pinColor="#0B3C78"
         />
 
@@ -103,9 +115,9 @@ export default function Map() {
       <View pointerEvents="box-none" style={mapStyles.overlay}>
         <View style={mapStyles.statusCard}>
           <Pressable onPress={() => setIsOpen((prev) => !prev)}>
-            <Text style={mapStyles.statusTitle}>Empreendimentos proximos</Text>
+            <Text style={mapStyles.statusTitle}>📍 Empreendimentos próximos</Text>
             <Text style={{ fontSize: 12, color: '#666' }}>
-              {isOpen ? 'Toque para recolher' : 'Toque para expandir'}
+              {isOpen ? 'Toque para recolher ▲' : 'Toque para expandir ▼'}
             </Text>
           </Pressable>
 

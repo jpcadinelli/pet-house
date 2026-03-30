@@ -90,7 +90,7 @@ function transformOverpassResponse(data) {
         element?.tags?.shop === 'pet'
           ? 'Pet shop'
           : element?.tags?.amenity === 'veterinary'
-            ? 'Clinica veterinaria'
+            ? 'Clínica veterinária'
             : 'Empreendimento pet',
     });
 
@@ -126,7 +126,7 @@ async function fetchOverpassFromUrl(url, query) {
     try {
       return JSON.parse(rawText);
     } catch {
-      throw new Error(`${url} retornou uma resposta invalida.`);
+      throw new Error(`${url} retornou uma resposta inválida.`);
     }
   } catch (error) {
     if (error?.name === 'AbortError') {
@@ -159,8 +159,8 @@ async function requestNearbyPetPlaces(latitude, longitude) {
 
   throw new Error(
     errors.length > 0
-      ? `Nao foi possivel consultar os empreendimentos pet proximos.\n${errors.join('\n')}`
-      : 'Nao foi possivel consultar os empreendimentos pet proximos.'
+      ? `Não foi possível consultar os empreendimentos pet próximos.\n${errors.join('\n')}`
+      : 'Não foi possível consultar os empreendimentos pet próximos.'
   );
 }
 
