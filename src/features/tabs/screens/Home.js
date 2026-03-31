@@ -1,11 +1,23 @@
-import { useEffect, useState } from 'react';
-import {View, Text, FlatList, ActivityIndicator, Image, TextInput} from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  View,
+  Text,
+  FlatList,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import { fetchNearbyPetPlaces } from '../../services/petPlacesService';
 import { homeStyles } from '../../../shared/styles/home.styles';
 
-const DEFAULT_LOCATION = {
-  latitude: -22.5231,
-  longitude: -44.1046,
+const LOCATION_MESSAGES = {
+  loading: 'Obtendo sua localização atual para buscar empreendimentos próximos...',
+  success: 'Usando sua localização atual para calcular distância e resultados próximos.',
+  denied:
+    'A permissão de localização foi negada. Libere o GPS para carregar os estabelecimentos próximos.',
+  fallback:
+    'Não foi possível obter sua localização atual. Tente novamente com o GPS ativo.',
 };
 
 function getDistance(lat1, lon1, lat2, lon2) {
@@ -34,37 +46,153 @@ function getStatus() {
   return { label: 'Fechado', style: homeStyles.closed };
 }
 
+function includesSearchTerm(place, search) {
+  const normalizedSearch = search.trim().toLowerCase();
+
+  if (!normalizedSearch) {
+    return true;
+  }
+
+  const searchableText = [place.title, place.description, place.categoryLabel]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return searchableText.includes(normalizedSearch);
+}
+
 export default function Home() {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [filteredPlaces, setFilteredPlaces] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(true);
+  const [locationMessage, setLocationMessage] = useState(LOCATION_MESSAGES.loading);
+  const [locationMessageType, setLocationMessageType] = useState('info');
+  const [placesLoading, setPlacesLoading] = useState(false);
+  const [placesError, setPlacesError] = useState('');
+  const isMountedRef = useRef(true);
+  const requestIdRef = useRef(0);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchNearbyPetPlaces(
-          DEFAULT_LOCATION.latitude,
-          DEFAULT_LOCATION.longitude
-        );
-        setPlaces(data);
-        setFilteredPlaces(data);
-      } catch (e) {
-        console.log(e);
-      } finally {
-        setLoading(false);
+  async function loadPlacesForLocation(
+    location,
+    { forceRefresh = false } = {},
+    requestId = requestIdRef.current
+  ) {
+    setPlacesLoading(true);
+    setPlacesError('');
+
+    try {
+      const data = await fetchNearbyPetPlaces(
+        location.latitude,
+        location.longitude,
+        { forceRefresh }
+      );
+
+      if (!isMountedRef.current || requestIdRef.current !== requestId) {
+        return;
+      }
+
+      setPlaces(data);
+    } catch (error) {
+      if (!isMountedRef.current || requestIdRef.current !== requestId) {
+        return;
+      }
+
+      setPlaces([]);
+      setPlacesError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível carregar empreendimentos pet próximos.'
+      );
+    } finally {
+      if (isMountedRef.current && requestIdRef.current === requestId) {
+        setPlacesLoading(false);
       }
     }
+  }
 
-    load();
+  async function loadHomeData({ forceRefresh = false, showFullScreen = false } = {}) {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+
+    if (showFullScreen) {
+      setLoading(true);
+    }
+
+    setLocationLoading(true);
+    setLocationMessage(LOCATION_MESSAGES.loading);
+    setLocationMessageType('info');
+    setPlacesError('');
+
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+
+      if (!isMountedRef.current || requestIdRef.current !== requestId) {
+        return;
+      }
+
+      if (permission.status !== 'granted') {
+        setUserLocation(null);
+        setPlaces([]);
+        setLocationMessage(LOCATION_MESSAGES.denied);
+        setLocationMessageType('error');
+        return;
+      }
+
+      const currentPosition = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Highest,
+        mayShowUserSettingsDialog: true,
+      });
+
+      if (!isMountedRef.current || requestIdRef.current !== requestId) {
+        return;
+      }
+
+      const nextLocation = {
+        latitude: currentPosition.coords.latitude,
+        longitude: currentPosition.coords.longitude,
+      };
+
+      setUserLocation(nextLocation);
+      setLocationMessage(LOCATION_MESSAGES.success);
+      setLocationMessageType('info');
+      await loadPlacesForLocation(nextLocation, { forceRefresh }, requestId);
+    } catch (error) {
+      console.log('[Home] Falha ao obter localização:', error);
+
+      if (!isMountedRef.current || requestIdRef.current !== requestId) {
+        return;
+      }
+
+      setUserLocation(null);
+      setPlaces([]);
+      setLocationMessage(LOCATION_MESSAGES.fallback);
+      setLocationMessageType('error');
+    } finally {
+      if (isMountedRef.current && requestIdRef.current === requestId) {
+        setLocationLoading(false);
+        if (showFullScreen) {
+          setLoading(false);
+        }
+      }
+    }
+  }
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    void loadHomeData({ showFullScreen: true });
+
+    return () => {
+      isMountedRef.current = false;
+      requestIdRef.current += 1;
+    };
   }, []);
 
   useEffect(() => {
-    const filtered = places.filter((place) =>
-      place.title.toLowerCase().includes(search.toLowerCase())
-    );
-
+    const filtered = places.filter((place) => includesSearchTerm(place, search));
     setFilteredPlaces(filtered);
   }, [search, places]);
 
@@ -72,44 +200,101 @@ export default function Home() {
     setRefreshing(true);
 
     try {
-      const data = await fetchNearbyPetPlaces(
-        DEFAULT_LOCATION.latitude,
-        DEFAULT_LOCATION.longitude,
-        { forceRefresh: true }
-      );
-      setPlaces(data);
-    } catch (e) {
-      console.log(e);
+      await loadHomeData({ forceRefresh: true });
     } finally {
-      setRefreshing(false);
+      if (isMountedRef.current) {
+        setRefreshing(false);
+      }
     }
   }
 
-  if (loading)
+  if (loading || (locationLoading && !userLocation)) {
     return (
       <View style={homeStyles.loading}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#0B3C78" />
+        <Text style={homeStyles.loadingText}>{LOCATION_MESSAGES.loading}</Text>
       </View>
     );
+  }
+
+  if (!userLocation) {
+    return (
+      <View style={homeStyles.emptyState}>
+        <Ionicons name="location-outline" size={42} color="#0B3C78" />
+        <Text style={homeStyles.emptyTitle}>Localização indisponível</Text>
+        <Text
+          style={
+            locationMessageType === 'error'
+              ? homeStyles.errorText
+              : homeStyles.emptyText
+          }
+        >
+          {locationMessage}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={homeStyles.container}>
+      <View style={homeStyles.locationCard}>
+        <View style={homeStyles.locationCardHeader}>
+          <Ionicons name="navigate-circle" size={20} color="#0B3C78" />
+          <Text style={homeStyles.locationTitle}>Busca pela sua localização</Text>
+        </View>
+
+        <Text
+          style={
+            locationMessageType === 'error'
+              ? homeStyles.errorText
+              : homeStyles.locationText
+          }
+        >
+          {locationMessage}
+        </Text>
+      </View>
+
       <TextInput
-        placeholder="Buscar pet shop ou veterinária..."
+        placeholder="Buscar pet shop, clínica veterinária ou hotel pet..."
         value={search}
         onChangeText={setSearch}
         style={homeStyles.searchInput}
       />
+
+      {placesLoading && !refreshing ? (
+        <View style={homeStyles.inlineStatus}>
+          <ActivityIndicator color="#0B3C78" />
+          <Text style={homeStyles.inlineStatusText}>
+            Buscando empreendimentos próximos...
+          </Text>
+        </View>
+      ) : null}
+
+      {!placesLoading && placesError ? (
+        <Text style={homeStyles.errorBanner}>{placesError}</Text>
+      ) : null}
 
       <FlatList
         data={filteredPlaces}
         refreshing={refreshing}
         onRefresh={reload}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={
+          filteredPlaces.length === 0 ? homeStyles.listEmptyContent : null
+        }
+        ListEmptyComponent={
+          !placesLoading && !placesError ? (
+            <View style={homeStyles.emptyListState}>
+              <Text style={homeStyles.emptyText}>
+                Nenhum empreendimento pet foi encontrado para sua localização atual.
+              </Text>
+            </View>
+          ) : null
+        }
         renderItem={({ item }) => {
           const distance = getDistance(
-            DEFAULT_LOCATION.latitude,
-            DEFAULT_LOCATION.longitude,
+            userLocation.latitude,
+            userLocation.longitude,
             item.coordinate.latitude,
             item.coordinate.longitude
           );
@@ -118,24 +303,46 @@ export default function Home() {
 
           return (
             <View style={homeStyles.card}>
-              <Image
-                source={{
-                  uri: 'https://cdn-icons-png.flaticon.com/512/616/616408.png',
-                }}
-                style={homeStyles.image}
-              />
+              <View
+                style={[
+                  homeStyles.iconTile,
+                  { backgroundColor: item.backgroundColor },
+                ]}
+              >
+                <Ionicons name={item.iconName} size={28} color={item.accentColor} />
+              </View>
 
               <View style={homeStyles.infoContainer}>
                 <Text style={homeStyles.title}>{item.title}</Text>
+                <Text style={homeStyles.description}>{item.description}</Text>
+
+                <View style={homeStyles.metaRow}>
+                  <View
+                    style={[
+                      homeStyles.categoryBadge,
+                      { backgroundColor: item.backgroundColor },
+                    ]}
+                  >
+                    <Ionicons
+                      name={item.iconName}
+                      size={12}
+                      color={item.accentColor}
+                    />
+                    <Text
+                      style={[
+                        homeStyles.categoryBadgeText,
+                        { color: item.accentColor },
+                      ]}
+                    >
+                      {item.categoryLabel}
+                    </Text>
+                  </View>
+                </View>
 
                 <View style={homeStyles.subtitleRow}>
-                  <Text style={homeStyles.distance}>
-                    {distance} km •
-                  </Text>
+                  <Text style={homeStyles.distance}>{distance} km •</Text>
 
-                  <Text style={[homeStyles.status, status.style]}>
-                    {status.label}
-                  </Text>
+                  <Text style={[homeStyles.status, status.style]}>{status.label}</Text>
                 </View>
               </View>
             </View>

@@ -4,7 +4,7 @@ export const homeStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F7FA',
-    paddingTop: 50,
+    paddingTop: 32,
   },
   searchInput: {
     backgroundColor: '#FFF',
@@ -29,6 +29,13 @@ export const homeStyles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#E0E0E0',
   },
+  iconTile: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   infoContainer: {
     flex: 1,
     marginLeft: 12,
@@ -42,6 +49,28 @@ export const homeStyles = StyleSheet.create({
   subtitleRow: {
     flexDirection: 'row',
     marginTop: 4,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  description: {
+    fontSize: 13,
+    color: '#475569',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  categoryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  categoryBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   distance: {
     fontSize: 13,
@@ -61,5 +90,92 @@ export const homeStyles = StyleSheet.create({
   loading: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    backgroundColor: '#F5F7FA',
+  },
+  loadingText: {
+    marginTop: 14,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    color: '#334155',
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    backgroundColor: '#F5F7FA',
+  },
+  emptyListState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  emptyTitle: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  emptyText: {
+    marginTop: 10,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+    color: '#475569',
+  },
+  locationCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 12,
+    marginTop: 12,
+    borderRadius: 18,
+    padding: 16,
+    elevation: 3,
+  },
+  locationCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  locationTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  locationText: {
+    marginTop: 10,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#475569',
+  },
+  errorText: {
+    marginTop: 10,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#B42318',
+  },
+  inlineStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginHorizontal: 12,
+    marginBottom: 8,
+  },
+  inlineStatusText: {
+    fontSize: 14,
+    color: '#475569',
+  },
+  errorBanner: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#B42318',
+  },
+  listEmptyContent: {
+    flexGrow: 1,
   },
 });

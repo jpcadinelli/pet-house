@@ -1,9 +1,19 @@
+import {
+  getPetPlaceCategory,
+  getPetPlaceCategoryMeta,
+} from '../../shared/constants/petPlaceCategories';
+
 const SEARCH_RADIUS_METERS = 25000;
 const OVERPASS_TIMEOUT_MS = 15000;
 const CACHE_TTL_MS = 60000;
 const OVERPASS_API_URLS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+];
+const OVERPASS_TAG_FILTERS = [
+  { key: 'shop', value: 'pet' },
+  { key: 'amenity', value: 'veterinary' },
+  { key: 'amenity', value: 'animal_boarding' },
 ];
 const QUERY_PROFILES = [
   {
@@ -24,6 +34,13 @@ let cachedKey = '';
 let inflightRequest = null;
 let inflightKey = '';
 
+function buildElementQueries(elementType, latitude, longitude, radius) {
+  return OVERPASS_TAG_FILTERS.map(
+    ({ key, value }) =>
+      `      ${elementType}["${key}"="${value}"](around:${radius},${latitude},${longitude});`
+  ).join('\n');
+}
+
 function buildOverpassQuery(
   latitude,
   longitude,
@@ -33,26 +50,19 @@ function buildOverpassQuery(
     includeRelations = true,
   } = {}
 ) {
+  const nodeQueries = buildElementQueries('node', latitude, longitude, radius);
   const wayQueries = includeWays
-    ? `
-      way["shop"="pet"](around:${radius},${latitude},${longitude});
-      way["amenity"="veterinary"](around:${radius},${latitude},${longitude});
-    `
+    ? buildElementQueries('way', latitude, longitude, radius)
     : '';
   const relationQueries = includeRelations
-    ? `
-      relation["shop"="pet"](around:${radius},${latitude},${longitude});
-      relation["amenity"="veterinary"](around:${radius},${latitude},${longitude});
-    `
+    ? buildElementQueries('relation', latitude, longitude, radius)
     : '';
 
   return `
     [out:json][timeout:25];
     (
-      node["shop"="pet"](around:${radius},${latitude},${longitude});
-      node["amenity"="veterinary"](around:${radius},${latitude},${longitude});
-${wayQueries}${relationQueries}
-    );
+${nodeQueries}
+${wayQueries ? `${wayQueries}\n` : ''}${relationQueries ? `${relationQueries}\n` : ''}    );
     out center;
   `;
 }
@@ -82,16 +92,19 @@ function transformOverpassResponse(data) {
 
     seenIds.add(id);
 
+    const category = getPetPlaceCategory(element?.tags);
+    const categoryMeta = getPetPlaceCategoryMeta(category);
+
     places.push({
       id,
       coordinate,
-      title: element?.tags?.name?.trim() || 'Empreendimento pet',
-      description:
-        element?.tags?.shop === 'pet'
-          ? 'Pet shop'
-          : element?.tags?.amenity === 'veterinary'
-            ? 'Clínica veterinária'
-            : 'Empreendimento pet',
+      title: element?.tags?.name?.trim() || categoryMeta.fallbackTitle,
+      description: categoryMeta.description,
+      category,
+      categoryLabel: categoryMeta.label,
+      iconName: categoryMeta.iconName,
+      accentColor: categoryMeta.accentColor,
+      backgroundColor: categoryMeta.backgroundColor,
     });
 
     return places;
