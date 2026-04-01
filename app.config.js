@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-export default { 
+export default {
   expo: {
     name: 'Pet House',
     slug: 'pet-house',
@@ -18,6 +18,13 @@ export default {
           backgroundColor: '#ffffff',
         },
       ],
+        [
+            'expo-location',
+            {
+                locationWhenInUsePermission:
+                    'Usamos sua localização para abrir o mapa na sua posição e buscar empreendimentos pet próximos.',
+            },
+        ],
     ],
 
     userInterfaceStyle: 'automatic',
@@ -26,8 +33,10 @@ export default {
       supportsTablet: true,
       bundleIdentifier: 'com.pethouse.app',
       infoPlist: {
-        NSFaceIDUsageDescription:
-          'Use o Face ID para autenticar seu acesso de forma rapida e segura.',
+          NSFaceIDUsageDescription:
+              'Use o Face ID para autenticar seu acesso de forma rápida e segura.',
+          NSLocationWhenInUseUsageDescription:
+              'Usamos sua localização para abrir o mapa na sua posição e buscar empreendimentos pet próximos.',
       },
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
@@ -36,6 +45,7 @@ export default {
 
     android: {
       package: 'com.pethouse.app',
+      permissions: ['ACCESS_COARSE_LOCATION', 'ACCESS_FINE_LOCATION'],
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#E6F4FE',

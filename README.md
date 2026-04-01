@@ -96,7 +96,7 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] `Pedro` Verificar código de chamada para API (duplicidade)
 - [x] `JP` Adicionar scrolling na tela de início
 - [x] `JP` Adicionar indicador de foto na imagem de perfil, ícone de câmera pequeno
-- [ ] `Pedro` Pegar localização exata do usuário com gps e abrir no local do mapa correto
+- [x] `Pedro` Pegar localização exata do usuário com gps e abrir no local do mapa correto
 
 ## Documentacao
 
