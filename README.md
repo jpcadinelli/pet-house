@@ -90,7 +90,7 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 ### Etapa 5 - Entrega P1 11/04/2026
 - [x] `Pedro` Ajustar bugs IOS
 - [x] `JP` Ajustar tab navigator
-- [ ] `Julio` Alterar nome do carregamento para Pet House e garantir carregamento do ícone 
+- [x] `Julio` Alterar nome do carregamento para Pet House e garantir carregamento do ícone 
 - [ ] `Julio` Carregar tela de início ao abrir o app
 - [ ] `Julio` Trocar disposição da tela de início para o meio e mapa para esquerda
 - [x] `Pedro` Verificar código de chamada para API (duplicidade)
