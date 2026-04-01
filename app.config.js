@@ -25,7 +25,10 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.pethouse.app',
-      
+      infoPlist: {
+        NSFaceIDUsageDescription:
+          'Use o Face ID para autenticar seu acesso de forma rapida e segura.',
+      },
       config: {
         googleMapsApiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY_IOS,
       },

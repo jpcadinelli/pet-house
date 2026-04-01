@@ -74,7 +74,8 @@ export default function Home() {
     try {
       const data = await fetchNearbyPetPlaces(
         DEFAULT_LOCATION.latitude,
-        DEFAULT_LOCATION.longitude
+        DEFAULT_LOCATION.longitude,
+        { forceRefresh: true }
       );
       setPlaces(data);
     } catch (e) {

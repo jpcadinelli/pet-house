@@ -1,54 +1,198 @@
 const SEARCH_RADIUS_METERS = 25000;
-const OVERPASS_API_URL = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_TIMEOUT_MS = 15000;
+const CACHE_TTL_MS = 60000;
+const OVERPASS_API_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+const QUERY_PROFILES = [
+  {
+    radius: SEARCH_RADIUS_METERS,
+    includeWays: true,
+    includeRelations: true,
+  },
+  {
+    radius: 10000,
+    includeWays: false,
+    includeRelations: false,
+  },
+];
 
-function buildOverpassQuery(latitude, longitude, radius = SEARCH_RADIUS_METERS) {
+let cachedResult = null;
+let cachedResultAt = 0;
+let cachedKey = '';
+let inflightRequest = null;
+let inflightKey = '';
+
+function buildOverpassQuery(
+  latitude,
+  longitude,
+  {
+    radius = SEARCH_RADIUS_METERS,
+    includeWays = true,
+    includeRelations = true,
+  } = {}
+) {
+  const wayQueries = includeWays
+    ? `
+      way["shop"="pet"](around:${radius},${latitude},${longitude});
+      way["amenity"="veterinary"](around:${radius},${latitude},${longitude});
+    `
+    : '';
+  const relationQueries = includeRelations
+    ? `
+      relation["shop"="pet"](around:${radius},${latitude},${longitude});
+      relation["amenity"="veterinary"](around:${radius},${latitude},${longitude});
+    `
+    : '';
+
   return `
     [out:json][timeout:25];
     (
       node["shop"="pet"](around:${radius},${latitude},${longitude});
       node["amenity"="veterinary"](around:${radius},${latitude},${longitude});
+${wayQueries}${relationQueries}
     );
     out center;
   `;
 }
 
 function getElementCoordinate(element) {
-  const latitude = element?.lat ?? element?.center?.lat;
-  const longitude = element?.lon ?? element?.center?.lon;
+  const latitude = typeof element?.lat === 'number' ? element.lat : element?.center?.lat;
+  const longitude = typeof element?.lon === 'number' ? element.lon : element?.center?.lon;
 
-  if (!latitude || !longitude) return null;
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
 
   return { latitude, longitude };
 }
 
 function transformOverpassResponse(data) {
-  const elements = data?.elements || [];
+  const elements = Array.isArray(data?.elements) ? data.elements : [];
+  const seenIds = new Set();
 
-  return elements.map((element) => ({
-    id: `${element.type}-${element.id}`,
-    coordinate: getElementCoordinate(element),
-    title: element?.tags?.name || 'Empreendimento pet',
-    description:
-      element?.tags?.shop === 'pet'
-        ? 'Pet shop'
-        : element?.tags?.amenity === 'veterinary'
-        ? 'Clínica veterinária'
-        : 'Pet',
-  }));
+  return elements.reduce((places, element) => {
+    const coordinate = getElementCoordinate(element);
+    const id = `${element?.type || 'item'}-${element?.id || places.length}`;
+
+    if (!coordinate || seenIds.has(id)) {
+      return places;
+    }
+
+    seenIds.add(id);
+
+    places.push({
+      id,
+      coordinate,
+      title: element?.tags?.name?.trim() || 'Empreendimento pet',
+      description:
+        element?.tags?.shop === 'pet'
+          ? 'Pet shop'
+          : element?.tags?.amenity === 'veterinary'
+            ? 'Clínica veterinária'
+            : 'Empreendimento pet',
+    });
+
+    return places;
+  }, []);
 }
 
-export async function fetchNearbyPetPlaces(latitude, longitude) {
-  const query = buildOverpassQuery(latitude, longitude);
+async function fetchOverpassFromUrl(url, query) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
 
-  const response = await fetch(OVERPASS_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: `data=${encodeURIComponent(query)}`,
-  });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: controller.signal,
+    });
 
-  const data = await response.json();
+    const rawText = await response.text();
 
-  return transformOverpassResponse(data);
+    if (!response.ok) {
+      const responseMessage = rawText.trim();
+      throw new Error(
+        responseMessage
+          ? `${url} respondeu ${response.status}: ${responseMessage}`
+          : `${url} respondeu ${response.status}.`
+      );
+    }
+
+    try {
+      return JSON.parse(rawText);
+    } catch {
+      throw new Error(`${url} retornou uma resposta inválida.`);
+    }
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error(`${url} excedeu o tempo limite da consulta.`);
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function requestNearbyPetPlaces(latitude, longitude) {
+  const errors = [];
+
+  for (const profile of QUERY_PROFILES) {
+    const query = buildOverpassQuery(latitude, longitude, profile);
+
+    for (const url of OVERPASS_API_URLS) {
+      try {
+        const data = await fetchOverpassFromUrl(url, query);
+        return transformOverpassResponse(data);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : `Falha ao consultar ${url}.`;
+        errors.push(message);
+        console.log('[petPlacesService] Falha no Overpass:', message);
+      }
+    }
+  }
+
+  throw new Error(
+    errors.length > 0
+      ? `Não foi possível consultar os empreendimentos pet próximos.\n${errors.join('\n')}`
+      : 'Não foi possível consultar os empreendimentos pet próximos.'
+  );
+}
+
+export async function fetchNearbyPetPlaces(latitude, longitude, options = {}) {
+  const { forceRefresh = false } = options;
+  const key = `${latitude}:${longitude}`;
+  const cacheIsFresh =
+    !forceRefresh &&
+    cachedKey === key &&
+    cachedResult &&
+    Date.now() - cachedResultAt < CACHE_TTL_MS;
+
+  if (cacheIsFresh) {
+    return cachedResult;
+  }
+
+  if (!forceRefresh && inflightRequest && inflightKey === key) {
+    return inflightRequest;
+  }
+
+  inflightKey = key;
+  inflightRequest = requestNearbyPetPlaces(latitude, longitude)
+    .then((places) => {
+      cachedKey = key;
+      cachedResult = places;
+      cachedResultAt = Date.now();
+      return places;
+    })
+    .finally(() => {
+      inflightRequest = null;
+      inflightKey = '';
+    });
+
+  return inflightRequest;
 }
