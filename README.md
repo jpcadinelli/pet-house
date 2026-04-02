@@ -91,8 +91,8 @@ O **Pet House** tem como objetivo facilitar a rotina de tutores, permitindo loca
 - [x] `Pedro` Ajustar bugs IOS
 - [x] `JP` Ajustar tab navigator
 - [x] `Julio` Alterar nome do carregamento para Pet House e garantir carregamento do ícone 
-- [ ] `Julio` Carregar tela de início ao abrir o app
-- [ ] `Julio` Trocar disposição da tela de início para o meio e mapa para esquerda
+- [x] `Julio` Carregar tela de início ao abrir o app
+- [x] `Julio` Trocar disposição da tela de início para o meio e mapa para esquerda
 - [x] `Pedro` Verificar código de chamada para API (duplicidade)
 - [x] `JP` Adicionar scrolling na tela de início
 - [x] `JP` Adicionar indicador de foto na imagem de perfil, ícone de câmera pequeno
