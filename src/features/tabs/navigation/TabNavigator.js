@@ -52,7 +52,7 @@ export default function TabNavigator({ authMethod, onLogout, userEmail }) {
   return (
     <NavigationContainer>
       <Tab.Navigator
-        initialRouteName="Mapa"
+        initialRouteName="Inicio"
         screenOptions={({ route }) => ({
           headerShown: false,
           sceneStyle: styles.scene,
@@ -95,9 +95,9 @@ export default function TabNavigator({ authMethod, onLogout, userEmail }) {
             renderTabIcon(route.name, focused, color, size),
         })}
       >
-        <Tab.Screen name="Inicio" component={Home} />
-
         <Tab.Screen name="Mapa" component={Map} />
+
+        <Tab.Screen name="Inicio" component={Home} />
 
         <Tab.Screen name="Perfil">
           {() => (
