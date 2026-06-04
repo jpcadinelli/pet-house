@@ -7,8 +7,8 @@ import { fetchNearbyPetPlaces } from '../../services/petPlacesService';
 import { mapStyles } from '../../../shared/styles/map.styles';
 
 const MAP_DELTAS = {
-  latitudeDelta: 0.25,
-  longitudeDelta: 0.25,
+  latitudeDelta: 0.02,
+  longitudeDelta: 0.02,
 };
 
 const LOCATION_MESSAGES = {
