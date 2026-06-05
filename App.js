@@ -9,9 +9,7 @@ import {
   getAuthSession,
   saveAuthSession,
 } from './src/features/auth/storage/authStorage';
-
-const MOCK_EMAIL = 'email@email.com';
-const MOCK_PASSWORD = '1234';
+import { initDatabase, loginUser } from './src/features/database/db';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
@@ -22,6 +20,8 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
+      initDatabase();
+
       const compativel = await LocalAuthentication.hasHardwareAsync();
       const session = await getAuthSession();
 
@@ -74,9 +74,13 @@ export default function App() {
 
   const handleCredentialLogin = async ({ email, password, biometricEnabled }) => {
     const normalizedEmail = email.trim().toLowerCase();
+    const usuario = loginUser(normalizedEmail, password);
 
-    if (normalizedEmail !== MOCK_EMAIL || password !== MOCK_PASSWORD) {
-      Alert.alert('Credenciais invalidas', 'Use o email email@email.com e a senha 1234.');
+    if (!usuario) {
+      Alert.alert(
+        'Credenciais invalidas',
+        'Email ou senha incorretos.'
+      );
       return;
     }
 
@@ -109,7 +113,7 @@ export default function App() {
       <SafeAreaProvider>
         <SecureScreen
           authMethod={authMethod}
-          userEmail={savedSession?.email || MOCK_EMAIL}
+          userEmail={savedSession?.email}
           onLogout={handleLogout}
         />
       </SafeAreaProvider>
