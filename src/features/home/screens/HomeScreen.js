@@ -8,12 +8,14 @@ export function HomeScreen({
   hasSavedBiometricLogin,
   onBiometricLogin,
   onCredentialLogin,
+  onRegister,
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleSubmit = () => {
+  const handleLogin = () => {
     onCredentialLogin({
       email,
       password,
@@ -21,12 +23,18 @@ export function HomeScreen({
     });
   };
 
+  const handleRegister = () => {
+    onRegister({
+      email,
+      password,
+    });
+  };
+
   return (
     <View style={appStyles.screenLogin}>
       <View style={appStyles.authCard}>
-        <Text style={appStyles.title}>Entrar</Text>
-        <Text style={appStyles.bodyText}>
-          Use o email `email@email.com` e a senha `1234`.
+        <Text style={appStyles.title}>
+          {isRegistering ? 'Criar Conta' : 'Entrar'}
         </Text>
 
         <TextInput
@@ -48,36 +56,86 @@ export function HomeScreen({
           value={password}
         />
 
-        <TouchableOpacity
-          activeOpacity={0.85}
-          disabled={!biometria}
-          onPress={() => setBiometricEnabled((currentValue) => !currentValue)}
-          style={appStyles.checkboxRow}
-        >
-          <View style={[appStyles.checkbox, biometricEnabled && appStyles.checkboxChecked]}>
-            {biometricEnabled ? <View style={appStyles.checkboxIndicator} /> : null}
-          </View>
+        {!isRegistering && (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            disabled={!biometria}
+            onPress={() =>
+              setBiometricEnabled(
+                (currentValue) => !currentValue
+              )
+            }
+            style={appStyles.checkboxRow}
+          >
+            <View
+              style={[
+                appStyles.checkbox,
+                biometricEnabled &&
+                  appStyles.checkboxChecked,
+              ]}
+            >
+              {biometricEnabled ? (
+                <View
+                  style={appStyles.checkboxIndicator}
+                />
+              ) : null}
+            </View>
 
-          <Text style={appStyles.checkboxLabel}>
-            {biometria
-              ? 'Habilitar entrada com biometria'
-              : 'Biometria indisponível neste dispositivo'}
+            <Text style={appStyles.checkboxLabel}>
+              {biometria
+                ? 'Habilitar entrada com biometria'
+                : 'Biometria indisponível neste dispositivo'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={appStyles.button}
+          onPress={
+            isRegistering
+              ? handleRegister
+              : handleLogin
+          }
+          activeOpacity={0.85}
+        >
+          <Text style={appStyles.buttonText}>
+            {isRegistering
+              ? 'Criar Conta'
+              : 'Entrar'}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={appStyles.button} onPress={handleSubmit} activeOpacity={0.85}>
-          <Text style={appStyles.buttonText}>Entrar com email e senha</Text>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() =>
+            setIsRegistering(!isRegistering)
+          }
+        >
+          <Text
+            style={appStyles.secondaryButtonText}
+          >
+            {isRegistering
+              ? 'Já possui conta? Entrar'
+              : 'Não possui conta? Criar conta'}
+          </Text>
         </TouchableOpacity>
 
-        {hasSavedBiometricLogin ? (
-          <TouchableOpacity
-            style={appStyles.secondaryButton}
-            onPress={onBiometricLogin}
-            activeOpacity={0.85}
-          >
-            <Text style={appStyles.secondaryButtonText}>Entrar com biometria</Text>
-          </TouchableOpacity>
-        ) : null}
+        {!isRegistering &&
+          hasSavedBiometricLogin && (
+            <TouchableOpacity
+              style={appStyles.secondaryButton}
+              onPress={onBiometricLogin}
+              activeOpacity={0.85}
+            >
+              <Text
+                style={
+                  appStyles.secondaryButtonText
+                }
+              >
+                Entrar com biometria
+              </Text>
+            </TouchableOpacity>
+          )}
       </View>
 
       <Text style={appStyles.helperText}>

@@ -9,7 +9,11 @@ import {
   getAuthSession,
   saveAuthSession,
 } from './src/features/auth/storage/authStorage';
-import { initDatabase, loginUser } from './src/features/database/db';
+import { 
+  initDatabase, 
+  loginUser,
+createUser, 
+} from './src/features/database/db';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
@@ -72,6 +76,28 @@ export default function App() {
     handleBiometricAccess();
   }, [authenticated, savedSession, sessionLoaded]);
 
+  const handleRegister = async ({
+      email,
+      password,
+  }) => {
+    try {
+      createUser(
+        email.trim().toLowerCase(),
+        password
+      );
+
+      Alert.alert(
+        'Sucesso',
+        'Conta criada com sucesso!'
+      );
+    } catch {
+      Alert.alert(
+        'Erro',
+        'Este email já está cadastrado.'
+      );
+    }
+  };
+
   const handleCredentialLogin = async ({ email, password, biometricEnabled }) => {
     const normalizedEmail = email.trim().toLowerCase();
     const usuario = loginUser(normalizedEmail, password);
@@ -127,6 +153,7 @@ export default function App() {
         hasSavedBiometricLogin={Boolean(savedSession?.isLoggedIn && savedSession?.biometricEnabled)}
         onBiometricLogin={handleBiometricAccess}
         onCredentialLogin={handleCredentialLogin}
+        onRegister={handleRegister}
       />
     </SafeAreaProvider>
   );
