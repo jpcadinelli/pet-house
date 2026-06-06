@@ -7,7 +7,7 @@ export const profileStyles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 120,
+    paddingBottom: 36,
   },
   center: {
     flex: 1,
