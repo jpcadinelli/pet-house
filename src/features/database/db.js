@@ -6,22 +6,11 @@ export const initDatabase = () => {
   db.execSync(`
     CREATE TABLE IF NOT EXISTS usuarios (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       senha TEXT NOT NULL
     );
   `);
-
-  const usuario = db.getFirstSync(
-    'SELECT * FROM usuarios WHERE email = ?',
-    ['email@email.com']
-  );
-
-  if (!usuario) {
-    db.runSync(
-      'INSERT INTO usuarios (email, senha) VALUES (?, ?)',
-      ['email@email.com', '1234']
-    );
-  }
 };
 
 export const loginUser = (email, senha) => {
@@ -31,10 +20,10 @@ export const loginUser = (email, senha) => {
   );
 };
 
-export const createUser = (email, senha) => {
+export const createUser = (nome, email, senha) => {
   return db.runSync(
-    'INSERT INTO usuarios (email, senha) VALUES (?, ?)',
-    [email, senha]
+    'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
+    [nome, email, senha]
   );
 };
 

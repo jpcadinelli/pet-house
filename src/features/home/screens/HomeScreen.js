@@ -10,6 +10,7 @@ export function HomeScreen({
   onCredentialLogin,
   onRegister,
 }) {
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -25,6 +26,7 @@ export function HomeScreen({
 
   const handleRegister = () => {
     onRegister({
+      nome,
       email,
       password,
     });
@@ -36,6 +38,16 @@ export function HomeScreen({
         <Text style={appStyles.title}>
           {isRegistering ? 'Criar Conta' : 'Entrar'}
         </Text>
+
+        {isRegistering && (
+          <TextInput
+            onChangeText={setNome}
+            placeholder="Nome"
+            placeholderTextColor="#7d8590"
+            style={appStyles.input}
+            value={nome}
+          />
+        )}
 
         <TextInput
           autoCapitalize="none"

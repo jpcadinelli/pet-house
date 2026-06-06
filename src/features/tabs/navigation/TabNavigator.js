@@ -41,7 +41,7 @@ function renderTabIcon(routeName, focused, color, size) {
   );
 }
 
-export default function TabNavigator({ authMethod, onLogout, userEmail }) {
+export default function TabNavigator({ authMethod, onLogout, userEmail, userNome }) {
   const [isProfileCameraOpen, setIsProfileCameraOpen] = useState(false);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -106,6 +106,7 @@ export default function TabNavigator({ authMethod, onLogout, userEmail }) {
               onLogout={onLogout}
               onCameraVisibilityChange={setIsProfileCameraOpen}
               userEmail={userEmail}
+              userNome={userNome}
             />
           )}
         </Tab.Screen>

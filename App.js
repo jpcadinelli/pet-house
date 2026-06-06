@@ -77,11 +77,13 @@ export default function App() {
   }, [authenticated, savedSession, sessionLoaded]);
 
   const handleRegister = async ({
+      nome,
       email,
       password,
   }) => {
     try {
       createUser(
+        nome,
         email.trim().toLowerCase(),
         password
       );
@@ -90,10 +92,12 @@ export default function App() {
         'Sucesso',
         'Conta criada com sucesso!'
       );
-    } catch {
+    } catch (error) {
+      console.error('Erro ao cadastrar:', error);
+
       Alert.alert(
         'Erro',
-        'Este email já está cadastrado.'
+        String(error)
       );
     }
   };
@@ -112,6 +116,7 @@ export default function App() {
 
     const nextSession = {
       isLoggedIn: true,
+      nome: usuario.nome,
       email: normalizedEmail,
       biometricEnabled,
       loginMethod: biometricEnabled ? 'biometria' : 'email_password',
@@ -140,6 +145,7 @@ export default function App() {
         <SecureScreen
           authMethod={authMethod}
           userEmail={savedSession?.email}
+          userNome={savedSession?.nome}
           onLogout={handleLogout}
         />
       </SafeAreaProvider>

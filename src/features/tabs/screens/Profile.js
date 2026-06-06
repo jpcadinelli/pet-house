@@ -13,6 +13,7 @@ export default function Profile({
   onLogout,
   onCameraVisibilityChange,
   userEmail,
+  userNome,
 }) {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [photoUri, setPhotoUri] = useState(null);
@@ -138,11 +139,14 @@ export default function Profile({
             <Ionicons name="camera" size={14} color="#FFFFFF" />
           </View>
         </TouchableOpacity>
-
-        <Text style={appStyles.title}>Meu Perfil</Text>
       </View>
 
       <View style={profileStyles.card}>
+            <Text style={appStyles.helperText}>Nome</Text>
+            <Text style={appStyles.bodyText}>{userNome}</Text>
+
+            <View style={profileStyles.spacer} />
+
             <Text style={appStyles.helperText}>Email</Text>
             <Text style={appStyles.bodyText}>{userEmail}</Text>
 
