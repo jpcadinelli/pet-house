@@ -120,6 +120,9 @@ async function fetchOverpassFromUrl(url, query) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        'Accept': 'application/json',
+        'User-Agent': 'PetHouse/1.0',
+        'Referer': 'https://github.com/jpcadinelli/pet-house',
       },
       body: `data=${encodeURIComponent(query)}`,
       signal: controller.signal,
