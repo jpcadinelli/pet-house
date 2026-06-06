@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { appStyles } from '../../../shared/styles/app.styles';
 
 export function HomeScreen({
@@ -13,6 +13,7 @@ export function HomeScreen({
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
@@ -25,6 +26,14 @@ export function HomeScreen({
   };
 
   const handleRegister = () => {
+    if (password !== confirmPassword) {
+      Alert.alert(
+        'Erro',
+        'As senhas não coincidem.'
+      );
+      return;
+    }
+
     onRegister({
       nome,
       email,
@@ -67,6 +76,17 @@ export function HomeScreen({
           style={appStyles.input}
           value={password}
         />
+
+        {isRegistering && (
+          <TextInput
+            onChangeText={setConfirmPassword}
+            placeholder="Confirmar senha"
+            placeholderTextColor="#7d8590"
+            secureTextEntry
+            style={appStyles.input}
+            value={confirmPassword}
+          />
+        )}
 
         {!isRegistering && (
           <TouchableOpacity
