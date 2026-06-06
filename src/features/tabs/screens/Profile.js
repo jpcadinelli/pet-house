@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
+  Modal,
   ScrollView,
   Text,
   TextInput,
@@ -15,6 +16,23 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { appStyles } from '../../../shared/styles/app.styles';
 import { profileStyles } from '../../../shared/styles/profile.styles';
+
+const NOMES_MESES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+];
+const DIAS_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+const QUANTIDADE_ANOS_VISIVEIS = 12;
 
 const petRepository = require('../../pets/services/petRepository');
 const {
@@ -56,6 +74,106 @@ function getProfilePhotoKey(userEmail) {
   return userEmail ? `userPhoto:${userEmail}` : 'userPhoto';
 }
 
+function criarDataUtc(ano, mes, dia) {
+  return new Date(Date.UTC(ano, mes, dia, 0, 0, 0, 0));
+}
+
+function obterHojeUtcZerado() {
+  const hoje = new Date();
+  return criarDataUtc(
+    hoje.getUTCFullYear(),
+    hoje.getUTCMonth(),
+    hoje.getUTCDate()
+  );
+}
+
+function obterDataFormulario(valor) {
+  if (!valor) {
+    return null;
+  }
+
+  if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+    return criarDataUtc(
+      valor.getUTCFullYear(),
+      valor.getUTCMonth(),
+      valor.getUTCDate()
+    );
+  }
+
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(valor));
+
+  if (!partes) {
+    return null;
+  }
+
+  return criarDataUtc(
+    Number(partes[1]),
+    Number(partes[2]) - 1,
+    Number(partes[3])
+  );
+}
+
+function formatarDataParaUsuario(valor) {
+  const data = obterDataFormulario(valor);
+
+  if (!data) {
+    return 'Selecionar data';
+  }
+
+  const dia = String(data.getUTCDate()).padStart(2, '0');
+  const mes = String(data.getUTCMonth() + 1).padStart(2, '0');
+  const ano = data.getUTCFullYear();
+
+  return `${dia}/${mes}/${ano}`;
+}
+
+function formatarDataParaFormulario(data) {
+  return data.toISOString().slice(0, 10);
+}
+
+function criarMesCalendario(data = obterHojeUtcZerado()) {
+  return criarDataUtc(data.getUTCFullYear(), data.getUTCMonth(), 1);
+}
+
+function obterDiasDoMesCalendario(mesVisivel) {
+  const ano = mesVisivel.getUTCFullYear();
+  const mes = mesVisivel.getUTCMonth();
+  const primeiroDia = criarDataUtc(ano, mes, 1);
+  const diasNoMes = criarDataUtc(ano, mes + 1, 0).getUTCDate();
+  const dias = [];
+
+  for (let index = 0; index < primeiroDia.getUTCDay(); index += 1) {
+    dias.push(null);
+  }
+
+  for (let dia = 1; dia <= diasNoMes; dia += 1) {
+    dias.push(criarDataUtc(ano, mes, dia));
+  }
+
+  while (dias.length % 7 !== 0) {
+    dias.push(null);
+  }
+
+  return dias;
+}
+
+function datasSaoIguais(primeiraData, segundaData) {
+  if (!primeiraData || !segundaData) {
+    return false;
+  }
+
+  return primeiraData.getTime() === segundaData.getTime();
+}
+
+function obterAnosVisiveis(anoCentral) {
+  const inicio = anoCentral - (anoCentral % QUANTIDADE_ANOS_VISIVEIS);
+
+  return Array.from(
+    { length: QUANTIDADE_ANOS_VISIVEIS },
+    (_, index) => inicio + index
+  );
+}
+
 export default function Profile({
   authMethod,
   onLogout,
@@ -76,6 +194,9 @@ export default function Profile({
   const [editingPet, setEditingPet] = useState(null);
   const [petForm, setPetForm] = useState(criarFormularioPetVazio);
   const [petFormErrors, setPetFormErrors] = useState({});
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [datePickerMode, setDatePickerMode] = useState('dias');
+  const [visibleDateMonth, setVisibleDateMonth] = useState(criarMesCalendario);
 
   const cameraRef = useRef(null);
   const petCameraRef = useRef(null);
@@ -216,6 +337,52 @@ export default function Profile({
         [field]: null,
       }));
     }
+  };
+
+  const openDatePicker = () => {
+    const dataSelecionada = obterDataFormulario(petForm.data_nascimento);
+    setVisibleDateMonth(criarMesCalendario(dataSelecionada || obterHojeUtcZerado()));
+    setDatePickerMode('dias');
+    setDatePickerOpen(true);
+  };
+
+  const changeVisibleDateMonth = (offset) => {
+    setVisibleDateMonth((currentMonth) => criarDataUtc(
+      currentMonth.getUTCFullYear(),
+      currentMonth.getUTCMonth() + offset,
+      1
+    ));
+  };
+
+  const changeVisibleYearRange = (offset) => {
+    setVisibleDateMonth((currentMonth) => criarDataUtc(
+      currentMonth.getUTCFullYear() + (offset * QUANTIDADE_ANOS_VISIVEIS),
+      currentMonth.getUTCMonth(),
+      1
+    ));
+  };
+
+  const selectVisibleYear = (year) => {
+    setVisibleDateMonth((currentMonth) => criarDataUtc(
+      year,
+      currentMonth.getUTCMonth(),
+      1
+    ));
+    setDatePickerMode('dias');
+  };
+
+  const selectBirthDate = (date) => {
+    if (!date || date.getTime() > obterHojeUtcZerado().getTime()) {
+      return;
+    }
+
+    updatePetFormField('data_nascimento', formatarDataParaFormulario(date));
+    setDatePickerOpen(false);
+  };
+
+  const clearBirthDate = () => {
+    updatePetFormField('data_nascimento', '');
+    setDatePickerOpen(false);
   };
 
   const handleSavePet = () => {
@@ -436,7 +603,11 @@ export default function Profile({
 
           <View style={profileStyles.detailRow}>
             <Text style={profileStyles.detailLabel}>Data de nascimento</Text>
-            <Text style={profileStyles.detailValue}>{formatarDataNascimentoParaInput(selectedPet.data_nascimento) || 'Não informada'}</Text>
+            <Text style={profileStyles.detailValue}>
+              {selectedPet.data_nascimento
+                ? formatarDataParaUsuario(selectedPet.data_nascimento)
+                : 'Não informada'}
+            </Text>
           </View>
 
           <View style={profileStyles.detailRow}>
@@ -529,14 +700,26 @@ export default function Profile({
         />
 
         <Text style={profileStyles.inputLabel}>Data de nascimento</Text>
-        <TextInput
-          placeholder="AAAA-MM-DD"
-          placeholderTextColor="#7d8590"
-          style={[profileStyles.input, petFormErrors.data_nascimento && profileStyles.inputError]}
-          value={petForm.data_nascimento}
-          keyboardType="numbers-and-punctuation"
-          onChangeText={(value) => updatePetFormField('data_nascimento', value)}
-        />
+        <TouchableOpacity
+          style={[
+            profileStyles.dateInputButton,
+            petFormErrors.data_nascimento && profileStyles.inputError,
+          ]}
+          onPress={openDatePicker}
+          activeOpacity={0.85}
+        >
+          <View style={profileStyles.dateInputContent}>
+            <Ionicons name="calendar-outline" size={20} color="#0B3C78" />
+            <Text
+              style={[
+                profileStyles.dateInputText,
+                !petForm.data_nascimento && profileStyles.dateInputPlaceholder,
+              ]}
+            >
+              {formatarDataParaUsuario(petForm.data_nascimento)}
+            </Text>
+          </View>
+        </TouchableOpacity>
         {renderFieldError('data_nascimento')}
 
         <Text style={profileStyles.inputLabel}>Observações</Text>
@@ -638,13 +821,172 @@ export default function Profile({
     );
   }
 
+  const selectedBirthDate = obterDataFormulario(petForm.data_nascimento);
+  const today = obterHojeUtcZerado();
+  const calendarDays = obterDiasDoMesCalendario(visibleDateMonth);
+  const visibleYears = obterAnosVisiveis(visibleDateMonth.getUTCFullYear());
+  const selectedYear = selectedBirthDate?.getUTCFullYear();
+  const currentYear = today.getUTCFullYear();
+
   return (
-    <ScrollView
-      style={profileStyles.container}
-      contentContainerStyle={profileStyles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={profileStyles.header}>
+    <>
+      <Modal
+        animationType="fade"
+        transparent
+        visible={datePickerOpen}
+        onRequestClose={() => setDatePickerOpen(false)}
+      >
+        <View style={profileStyles.dateModalBackdrop}>
+          <View style={profileStyles.dateModalCard}>
+            <View style={profileStyles.dateModalHeader}>
+              <TouchableOpacity
+                style={profileStyles.dateMonthButton}
+                onPress={() => (
+                  datePickerMode === 'anos'
+                    ? changeVisibleYearRange(-1)
+                    : changeVisibleDateMonth(-1)
+                )}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="chevron-back" size={20} color="#0B3C78" />
+              </TouchableOpacity>
+
+              {datePickerMode === 'anos' ? (
+                <Text style={profileStyles.dateModalTitle}>
+                  {visibleYears[0]} - {visibleYears[visibleYears.length - 1]}
+                </Text>
+              ) : (
+                <View style={profileStyles.dateModalTitleRow}>
+                  <Text style={profileStyles.dateModalMonthText}>
+                    {NOMES_MESES[visibleDateMonth.getUTCMonth()]}
+                  </Text>
+
+                  <TouchableOpacity
+                    style={profileStyles.dateYearButton}
+                    onPress={() => setDatePickerMode('anos')}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={profileStyles.dateYearButtonText}>
+                      {visibleDateMonth.getUTCFullYear()}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={profileStyles.dateMonthButton}
+                onPress={() => (
+                  datePickerMode === 'anos'
+                    ? changeVisibleYearRange(1)
+                    : changeVisibleDateMonth(1)
+                )}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="chevron-forward" size={20} color="#0B3C78" />
+              </TouchableOpacity>
+            </View>
+
+            {datePickerMode === 'anos' ? (
+              <View style={profileStyles.yearGrid}>
+                {visibleYears.map((year) => {
+                  const selected = year === selectedYear;
+                  const disabled = year > currentYear;
+
+                  return (
+                    <TouchableOpacity
+                      key={year}
+                      style={[
+                        profileStyles.yearOption,
+                        selected && profileStyles.yearOptionSelected,
+                        disabled && profileStyles.yearOptionDisabled,
+                      ]}
+                      disabled={disabled}
+                      onPress={() => selectVisibleYear(year)}
+                      activeOpacity={0.85}
+                    >
+                      <Text
+                        style={[
+                          profileStyles.yearOptionText,
+                          selected && profileStyles.yearOptionTextSelected,
+                          disabled && profileStyles.yearOptionTextDisabled,
+                        ]}
+                      >
+                        {year}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : (
+              <>
+                <View style={profileStyles.weekDaysRow}>
+                  {DIAS_SEMANA.map((weekDay, index) => (
+                    <Text key={`${weekDay}-${index}`} style={profileStyles.weekDayText}>
+                      {weekDay}
+                    </Text>
+                  ))}
+                </View>
+
+                <View style={profileStyles.calendarGrid}>
+                  {calendarDays.map((date, index) => {
+                    const disabled = !date || date.getTime() > today.getTime();
+                    const selected = datasSaoIguais(date, selectedBirthDate);
+
+                    return (
+                      <TouchableOpacity
+                        key={date ? date.toISOString() : `empty-${index}`}
+                        style={[
+                          profileStyles.calendarDay,
+                          selected && profileStyles.calendarDaySelected,
+                          disabled && profileStyles.calendarDayDisabled,
+                        ]}
+                        disabled={disabled}
+                        onPress={() => selectBirthDate(date)}
+                        activeOpacity={0.85}
+                      >
+                        <Text
+                          style={[
+                            profileStyles.calendarDayText,
+                            selected && profileStyles.calendarDayTextSelected,
+                            disabled && profileStyles.calendarDayTextDisabled,
+                          ]}
+                        >
+                          {date ? date.getUTCDate() : ''}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            <View style={profileStyles.dateModalActions}>
+              <TouchableOpacity
+                style={profileStyles.lightActionButton}
+                onPress={clearBirthDate}
+                activeOpacity={0.85}
+              >
+                <Text style={profileStyles.lightActionButtonText}>Limpar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={profileStyles.secondaryActionButton}
+                onPress={() => setDatePickerOpen(false)}
+                activeOpacity={0.85}
+              >
+                <Text style={profileStyles.secondaryActionButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <ScrollView
+        style={profileStyles.container}
+        contentContainerStyle={profileStyles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={profileStyles.header}>
         <TouchableOpacity
           onPress={async () => {
             if (!permission.granted) {
@@ -665,7 +1007,7 @@ export default function Profile({
         </TouchableOpacity>
       </View>
 
-      <View style={profileStyles.card}>
+        <View style={profileStyles.card}>
         <Text style={appStyles.helperText}>Nome</Text>
         <Text style={appStyles.bodyText}>{userNome}</Text>
 
@@ -682,11 +1024,11 @@ export default function Profile({
         </Text>
       </View>
 
-      {petsView === 'details' ? renderPetDetails() : null}
-      {petsView === 'form' ? renderPetForm() : null}
-      {petsView === 'list' ? renderPetsList() : null}
+        {petsView === 'details' ? renderPetDetails() : null}
+        {petsView === 'form' ? renderPetForm() : null}
+        {petsView === 'list' ? renderPetsList() : null}
 
-      <View style={profileStyles.logoutContainer}>
+        <View style={profileStyles.logoutContainer}>
         <TouchableOpacity
           style={appStyles.button}
           onPress={onLogout}
@@ -694,7 +1036,8 @@ export default function Profile({
         >
           <Text style={appStyles.buttonText}>Sair da conta</Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </>
   );
 }
