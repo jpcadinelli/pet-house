@@ -9,11 +9,13 @@ import {
   getAuthSession,
   saveAuthSession,
 } from './src/features/auth/storage/authStorage';
-import { 
-  initDatabase, 
+import { initDatabase, getDB } from './src/features/database/db';
+
+import {
+  createUser,
+  getUserByEmail,
   loginUser,
-createUser, 
-} from './src/features/database/db';
+} from './src/features/database/consultas/usuario';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
@@ -27,7 +29,32 @@ export default function App() {
       initDatabase();
 
       const compativel = await LocalAuthentication.hasHardwareAsync();
-      const session = await getAuthSession();
+      let session = await getAuthSession();
+
+      if (session?.isLoggedIn && session.userId && !session.idUsuario) {
+        session = {
+          ...session,
+          idUsuario: session.userId,
+        };
+        delete session.userId;
+        await saveAuthSession(session);
+      }
+
+      if (session?.isLoggedIn && session.email && !session.idUsuario) {
+        const usuario = getUserByEmail(getDB(), session.email.trim().toLowerCase());
+
+        if (usuario) {
+          session = {
+            ...session,
+            idUsuario: String(usuario.id),
+            nome: usuario.nome,
+          };
+          await saveAuthSession(session);
+        } else {
+          await clearAuthSession();
+          session = null;
+        }
+      }
 
       setBiometria(compativel);
       setSavedSession(session);
@@ -76,13 +103,10 @@ export default function App() {
     handleBiometricAccess();
   }, [authenticated, savedSession, sessionLoaded]);
 
-  const handleRegister = async ({
-      nome,
-      email,
-      password,
-  }) => {
+  const handleRegister = async ({ nome, email, password }) => {
     try {
       createUser(
+        getDB(),
         nome,
         email.trim().toLowerCase(),
         password
@@ -104,7 +128,7 @@ export default function App() {
 
   const handleCredentialLogin = async ({ email, password, biometricEnabled }) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const usuario = loginUser(normalizedEmail, password);
+    const usuario = loginUser(getDB(), normalizedEmail, password);
 
     if (!usuario) {
       Alert.alert(
@@ -116,6 +140,7 @@ export default function App() {
 
     const nextSession = {
       isLoggedIn: true,
+      idUsuario: String(usuario.id),
       nome: usuario.nome,
       email: normalizedEmail,
       biometricEnabled,
@@ -145,6 +170,7 @@ export default function App() {
         <SecureScreen
           authMethod={authMethod}
           userEmail={savedSession?.email}
+          idUsuario={savedSession?.idUsuario}
           userNome={savedSession?.nome}
           onLogout={handleLogout}
         />

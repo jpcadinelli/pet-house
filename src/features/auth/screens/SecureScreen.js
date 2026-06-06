@@ -4,11 +4,17 @@ import { appStyles } from '../../../shared/styles/app.styles';
 
 import TabNavigator from '../../tabs/navigation/TabNavigator';
 
-export function SecureScreen({ authMethod, onLogout, userEmail, userNome }) {
+export function SecureScreen({ authMethod, idUsuario, onLogout, userEmail, userNome }) {
   return (
     <View style={appStyles.container}>
       <View style={{ flex: 1, width: '100%' }}>
-        <TabNavigator authMethod={authMethod} onLogout={onLogout} userEmail={userEmail} userNome={userNome} />
+        <TabNavigator
+          authMethod={authMethod}
+          onLogout={onLogout}
+          userEmail={userEmail}
+          idUsuario={idUsuario}
+          userNome={userNome}
+        />
       </View>
 
       <StatusBar style="auto" />
