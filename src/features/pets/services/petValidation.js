@@ -101,7 +101,7 @@ function normalizarPetEntrada(entrada = {}) {
     especie: normalizarTexto(entrada.especie),
     raca: normalizarTextoOpcional(entrada.raca),
     data_nascimento: interpretarDataNascimento(entrada.data_nascimento),
-    sexo: normalizarTexto(entrada.sexo || 'Não informado'),
+    sexo: normalizarTexto(entrada.sexo ?? 'Não informado'),
     observacoes: normalizarTextoOpcional(entrada.observacoes),
     foto_uri: normalizarTextoOpcional(entrada.foto_uri),
   };
