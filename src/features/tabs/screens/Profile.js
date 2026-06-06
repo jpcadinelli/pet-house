@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -33,6 +36,8 @@ const NOMES_MESES = [
 ];
 const DIAS_SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 const QUANTIDADE_ANOS_VISIVEIS = 12;
+const DISTANCIA_CAMPO_ATIVO_TOPO = 12;
+const ATRASOS_ROLAGEM_TECLADO_MS = [80, 320, 620];
 
 const petRepository = require('../../pets/services/petRepository');
 const {
@@ -198,6 +203,12 @@ export default function Profile({
   const [datePickerMode, setDatePickerMode] = useState('dias');
   const [visibleDateMonth, setVisibleDateMonth] = useState(criarMesCalendario);
 
+  const scrollViewRef = useRef(null);
+  const activePetFormFieldRef = useRef(null);
+  const scrollTimeoutsRef = useRef([]);
+  const petFormRootYRef = useRef(0);
+  const petFormCardYRef = useRef(0);
+  const petFormFieldYRef = useRef({});
   const cameraRef = useRef(null);
   const petCameraRef = useRef(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -246,6 +257,33 @@ export default function Profile({
       onCameraVisibilityChange?.(false);
     };
   }, [cameraOpen, onCameraVisibilityChange, petCameraOpen]);
+
+  useEffect(() => {
+    const scrollActiveFieldAfterKeyboardOpens = () => {
+      if (activePetFormFieldRef.current) {
+        scrollPetFormFieldToTop(activePetFormFieldRef.current, [40, 180]);
+      }
+    };
+
+    const keyboardDidShowSubscription = Keyboard.addListener(
+      'keyboardDidShow',
+      scrollActiveFieldAfterKeyboardOpens
+    );
+    const keyboardWillShowSubscription = Platform.OS === 'ios'
+      ? Keyboard.addListener('keyboardWillShow', scrollActiveFieldAfterKeyboardOpens)
+      : null;
+    const keyboardDidHideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      activePetFormFieldRef.current = null;
+    });
+
+    return () => {
+      keyboardDidShowSubscription.remove();
+      keyboardWillShowSubscription?.remove();
+      keyboardDidHideSubscription.remove();
+      scrollTimeoutsRef.current.forEach(clearTimeout);
+      scrollTimeoutsRef.current = [];
+    };
+  }, []);
 
   if (!permission || !petCameraPermission) {
     return (
@@ -338,6 +376,36 @@ export default function Profile({
       }));
     }
   };
+
+  const registerPetFormFieldLayout = (field, event) => {
+    petFormFieldYRef.current[field] = event.nativeEvent.layout.y;
+  };
+
+  function scrollPetFormFieldToTop(field, delays = ATRASOS_ROLAGEM_TECLADO_MS) {
+    activePetFormFieldRef.current = field;
+
+    const fieldY = petFormFieldYRef.current[field];
+
+    if (typeof fieldY !== 'number') {
+      return;
+    }
+
+    const targetY = Math.max(
+      petFormRootYRef.current +
+        petFormCardYRef.current +
+        fieldY -
+        DISTANCIA_CAMPO_ATIVO_TOPO,
+      0
+    );
+
+    scrollTimeoutsRef.current.forEach(clearTimeout);
+    scrollTimeoutsRef.current = delays.map((delay) => setTimeout(() => {
+      scrollViewRef.current?.scrollTo({
+        y: targetY,
+        animated: true,
+      });
+    }, delay));
+  }
 
   const openDatePicker = () => {
     const dataSelecionada = obterDataFormulario(petForm.data_nascimento);
@@ -643,13 +711,23 @@ export default function Profile({
   };
 
   const renderPetForm = () => (
-    <View style={profileStyles.petsContent}>
+    <View
+      style={profileStyles.petsContent}
+      onLayout={(event) => {
+        petFormRootYRef.current = event.nativeEvent.layout.y;
+      }}
+    >
       <TouchableOpacity style={profileStyles.backButton} onPress={backToPetsList} activeOpacity={0.85}>
         <Ionicons name="chevron-back" size={18} color="#0B3C78" />
         <Text style={profileStyles.backButtonText}>Voltar</Text>
       </TouchableOpacity>
 
-      <View style={profileStyles.petFormCard}>
+      <View
+        style={profileStyles.petFormCard}
+        onLayout={(event) => {
+          petFormCardYRef.current = event.nativeEvent.layout.y;
+        }}
+      >
         <Text style={profileStyles.sectionTitle}>{editingPet ? 'Editar pet' : 'Novo pet'}</Text>
 
         <View style={profileStyles.photoFormRow}>
@@ -672,15 +750,18 @@ export default function Profile({
           </View>
         </View>
 
-        <Text style={profileStyles.inputLabel}>Nome *</Text>
-        <TextInput
-          placeholder="Ex: Luna"
-          placeholderTextColor="#7d8590"
-          style={[profileStyles.input, petFormErrors.nome && profileStyles.inputError]}
-          value={petForm.nome}
-          onChangeText={(value) => updatePetFormField('nome', value)}
-        />
-        {renderFieldError('nome')}
+        <View onLayout={(event) => registerPetFormFieldLayout('nome', event)}>
+          <Text style={profileStyles.inputLabel}>Nome *</Text>
+          <TextInput
+            placeholder="Ex: Luna"
+            placeholderTextColor="#7d8590"
+            style={[profileStyles.input, petFormErrors.nome && profileStyles.inputError]}
+            value={petForm.nome}
+            onFocus={() => scrollPetFormFieldToTop('nome')}
+            onChangeText={(value) => updatePetFormField('nome', value)}
+          />
+          {renderFieldError('nome')}
+        </View>
 
         <Text style={profileStyles.inputLabel}>Espécie *</Text>
         {renderOptionButtons('especie', OPCOES_ESPECIE_PET)}
@@ -690,14 +771,17 @@ export default function Profile({
         {renderOptionButtons('sexo', OPCOES_SEXO_PET)}
         {renderFieldError('sexo')}
 
-        <Text style={profileStyles.inputLabel}>Raça</Text>
-        <TextInput
-          placeholder="Opcional"
-          placeholderTextColor="#7d8590"
-          style={profileStyles.input}
-          value={petForm.raca}
-          onChangeText={(value) => updatePetFormField('raca', value)}
-        />
+        <View onLayout={(event) => registerPetFormFieldLayout('raca', event)}>
+          <Text style={profileStyles.inputLabel}>Raça</Text>
+          <TextInput
+            placeholder="Opcional"
+            placeholderTextColor="#7d8590"
+            style={profileStyles.input}
+            value={petForm.raca}
+            onFocus={() => scrollPetFormFieldToTop('raca')}
+            onChangeText={(value) => updatePetFormField('raca', value)}
+          />
+        </View>
 
         <Text style={profileStyles.inputLabel}>Data de nascimento</Text>
         <TouchableOpacity
@@ -722,16 +806,19 @@ export default function Profile({
         </TouchableOpacity>
         {renderFieldError('data_nascimento')}
 
-        <Text style={profileStyles.inputLabel}>Observações</Text>
-        <TextInput
-          placeholder="Peso, porte, cor, alergias ou outros detalhes"
-          placeholderTextColor="#7d8590"
-          multiline
-          textAlignVertical="top"
-          style={[profileStyles.input, profileStyles.observacoesInput]}
-          value={petForm.observacoes}
-          onChangeText={(value) => updatePetFormField('observacoes', value)}
-        />
+        <View onLayout={(event) => registerPetFormFieldLayout('observacoes', event)}>
+          <Text style={profileStyles.inputLabel}>Observações</Text>
+          <TextInput
+            placeholder="Peso, porte, cor, alergias ou outros detalhes"
+            placeholderTextColor="#7d8590"
+            multiline
+            textAlignVertical="top"
+            style={[profileStyles.input, profileStyles.observacoesInput]}
+            value={petForm.observacoes}
+            onFocus={() => scrollPetFormFieldToTop('observacoes')}
+            onChangeText={(value) => updatePetFormField('observacoes', value)}
+          />
+        </View>
 
         <View style={profileStyles.formActions}>
           <TouchableOpacity style={profileStyles.secondaryActionButton} onPress={backToPetsList} activeOpacity={0.85}>
@@ -981,11 +1068,18 @@ export default function Profile({
         </View>
       </Modal>
 
-      <ScrollView
-        style={profileStyles.container}
-        contentContainerStyle={profileStyles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={profileStyles.keyboardAvoidingContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
       >
+        <ScrollView
+          ref={scrollViewRef}
+          style={profileStyles.container}
+          contentContainerStyle={profileStyles.scrollContent}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={profileStyles.header}>
         <TouchableOpacity
           onPress={async () => {
@@ -1037,7 +1131,8 @@ export default function Profile({
           <Text style={appStyles.buttonText}>Sair da conta</Text>
         </TouchableOpacity>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }

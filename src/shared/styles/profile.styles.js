@@ -1,6 +1,9 @@
 import { StyleSheet } from 'react-native';
 
 export const profileStyles = StyleSheet.create({
+  keyboardAvoidingContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#F5F6FA',
