@@ -9,9 +9,11 @@ import {
   getAuthSession,
   saveAuthSession,
 } from './src/features/auth/storage/authStorage';
-
-const MOCK_EMAIL = 'email@email.com';
-const MOCK_PASSWORD = '1234';
+import { 
+  initDatabase, 
+  loginUser,
+createUser, 
+} from './src/features/database/db';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
@@ -22,6 +24,8 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
+      initDatabase();
+
       const compativel = await LocalAuthentication.hasHardwareAsync();
       const session = await getAuthSession();
 
@@ -72,16 +76,47 @@ export default function App() {
     handleBiometricAccess();
   }, [authenticated, savedSession, sessionLoaded]);
 
+  const handleRegister = async ({
+      nome,
+      email,
+      password,
+  }) => {
+    try {
+      createUser(
+        nome,
+        email.trim().toLowerCase(),
+        password
+      );
+
+      Alert.alert(
+        'Sucesso',
+        'Conta criada com sucesso!'
+      );
+    } catch (error) {
+      console.error('Erro ao cadastrar:', error);
+
+      Alert.alert(
+        'Erro',
+        String(error)
+      );
+    }
+  };
+
   const handleCredentialLogin = async ({ email, password, biometricEnabled }) => {
     const normalizedEmail = email.trim().toLowerCase();
+    const usuario = loginUser(normalizedEmail, password);
 
-    if (normalizedEmail !== MOCK_EMAIL || password !== MOCK_PASSWORD) {
-      Alert.alert('Credenciais invalidas', 'Use o email email@email.com e a senha 1234.');
+    if (!usuario) {
+      Alert.alert(
+        'Credenciais invalidas',
+        'Email ou senha incorretos.'
+      );
       return;
     }
 
     const nextSession = {
       isLoggedIn: true,
+      nome: usuario.nome,
       email: normalizedEmail,
       biometricEnabled,
       loginMethod: biometricEnabled ? 'biometria' : 'email_password',
@@ -109,7 +144,8 @@ export default function App() {
       <SafeAreaProvider>
         <SecureScreen
           authMethod={authMethod}
-          userEmail={savedSession?.email || MOCK_EMAIL}
+          userEmail={savedSession?.email}
+          userNome={savedSession?.nome}
           onLogout={handleLogout}
         />
       </SafeAreaProvider>
@@ -123,6 +159,7 @@ export default function App() {
         hasSavedBiometricLogin={Boolean(savedSession?.isLoggedIn && savedSession?.biometricEnabled)}
         onBiometricLogin={handleBiometricAccess}
         onCredentialLogin={handleCredentialLogin}
+        onRegister={handleRegister}
       />
     </SafeAreaProvider>
   );

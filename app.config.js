@@ -18,13 +18,16 @@ export default {
           backgroundColor: '#ffffff',
         },
       ],
-        [
-            'expo-location',
-            {
-                locationWhenInUsePermission:
-                    'Usamos sua localização para abrir o mapa na sua posição e buscar empreendimentos pet próximos.',
-            },
-        ],
+      [
+        'expo-location',
+        {
+          locationWhenInUsePermission:
+            'Usamos sua localização para abrir o mapa na sua posição e buscar empreendimentos pet próximos.',
+        },
+      ],
+      [
+        'expo-sqlite'
+      ],
     ],
 
     userInterfaceStyle: 'automatic',
