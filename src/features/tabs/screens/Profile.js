@@ -223,7 +223,6 @@ export default function Profile({
     setPetsLoading(true);
 
     try {
-      petRepository.inicializarTabelaPets();
       setPets(petRepository.listarPetsPorUsuario(idUsuario));
     } catch (error) {
       console.log('Erro ao carregar pets:', error);

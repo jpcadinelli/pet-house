@@ -4,13 +4,17 @@ import { V20260606113011_add_pets } from './migrations/V20260606113011_add_pets'
 
 const db = SQLite.openDatabaseSync('pet_house.db');
 
+const migrations = [
+  V20260605202020_add_usuario,
+  V20260606113011_add_pets,
+];
+
 export function getDB() {
-  return db
+  return db;
 }
 
 export const initDatabase = () => {
-  V20260605202020_add_usuario(db);
-  V20260606113011_add_pets(db);
+  migrations.forEach((migration) => migration(db));
 };
 
 export default db;
