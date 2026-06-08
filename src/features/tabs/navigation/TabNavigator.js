@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Home from '../screens/Home';
 import Map from '../screens/Map';
 import Profile from '../screens/Profile';
+import VaccinesScreen from '../../vaccines/screens/VaccinesScreen';
 
 import { styles, tabTheme } from '../../../shared/styles/tabNav.styles';
 
@@ -18,6 +19,7 @@ function getTabIcon(routeName, focused) {
   const iconMap = {
     Inicio: focused ? 'paw' : 'paw-outline',
     Mapa: focused ? 'location' : 'location-outline',
+    Vacinas: focused ? 'medkit' : 'medkit-outline',
     Perfil: focused ? 'person-circle' : 'person-circle-outline',
   };
 
@@ -98,6 +100,12 @@ export default function TabNavigator({ authMethod, idUsuario, onLogout, userEmai
         <Tab.Screen name="Mapa" component={Map} />
 
         <Tab.Screen name="Inicio" component={Home} />
+
+        <Tab.Screen name="Vacinas">
+          {() => (
+            <VaccinesScreen idUsuario={idUsuario} />
+          )}
+        </Tab.Screen>
 
         <Tab.Screen name="Perfil">
           {() => (

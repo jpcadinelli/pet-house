@@ -146,8 +146,26 @@ function atualizarPet(database, id, idUsuario, entrada) {
   return buscarPetPorId(database, id, idUsuarioNormalizado);
 }
 
+function excluirVacinasDoPetSeExistirem(database, idUsuario, idPet) {
+  const consultasVacinas = require('./vacinas');
+
+  if (!consultasVacinas.tabelaVacinasExiste(database)) {
+    return 0;
+  }
+
+  return consultasVacinas.excluirVacinasPorPet(database, idUsuario, idPet);
+}
+
 function excluirPet(database, id, idUsuario) {
   const idUsuarioNormalizado = garantirIdUsuario(idUsuario);
+  const petExistente = buscarPetPorId(database, id, idUsuarioNormalizado);
+
+  if (!petExistente) {
+    return 0;
+  }
+
+  excluirVacinasDoPetSeExistirem(database, idUsuarioNormalizado, id);
+
   const resultado = database.runSync(
     'DELETE FROM pets WHERE id = ? AND id_usuario = ?',
     [id, idUsuarioNormalizado]
