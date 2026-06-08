@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import { vaccineStyles } from '../../../shared/styles/vaccine.styles';
@@ -30,7 +30,7 @@ export default function VaccineCard({ vaccine, onEdit, onDelete }) {
     <View style={[vaccineStyles.vaccineCard, isLate && vaccineStyles.vaccineCardLate]}>
       <View style={vaccineStyles.vaccineCardHeader}>
         <View style={vaccineStyles.vaccineIconTile}>
-          <Ionicons name="medkit-outline" size={22} color="#0B3C78" />
+          <FontAwesome5 name="syringe" size={20} color="#0B3C78" />
         </View>
 
         <View style={vaccineStyles.vaccineCardBody}>
