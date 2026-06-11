@@ -1,5 +1,4 @@
-const assert = require('node:assert/strict');
-const test = require('node:test');
+const { describe, expect, test } = require('@jest/globals');
 
 const { criarRepositorioPets } = require('../src/features/pets/services/petRepositoryCore');
 
@@ -140,77 +139,79 @@ function comDateNowFixo(timestamp, callback) {
   }
 }
 
-test('salva data_nascimento como timestamp UTC com horário zerado', () => {
-  const repositorio = criarRepositorioPets(criarBancoEmMemoria());
+describe('criarRepositorioPets', () => {
+  test('salva data_nascimento como timestamp UTC com horário zerado', () => {
+    const repositorio = criarRepositorioPets(criarBancoEmMemoria());
 
-  const rex = comDateNowFixo(1700000000000, () => repositorio.criarPet('usuario-a', petEntrada));
+    const rex = comDateNowFixo(1700000000000, () => repositorio.criarPet('usuario-a', petEntrada));
 
-  assert.ok(rex.data_nascimento instanceof Date);
-  assert.equal(rex.data_nascimento.toISOString(), '2020-02-02T00:00:00.000Z');
-});
+    expect(rex.data_nascimento instanceof Date).toBeTruthy();
+    expect(rex.data_nascimento.toISOString()).toBe('2020-02-02T00:00:00.000Z');
+  });
 
-test('salva criado_em e atualizado_em em UTC no cadastro', () => {
-  const repositorio = criarRepositorioPets(criarBancoEmMemoria());
+  test('salva criado_em e atualizado_em em UTC no cadastro', () => {
+    const repositorio = criarRepositorioPets(criarBancoEmMemoria());
 
-  const rex = comDateNowFixo(1700000000000, () => repositorio.criarPet('usuario-a', petEntrada));
+    const rex = comDateNowFixo(1700000000000, () => repositorio.criarPet('usuario-a', petEntrada));
 
-  assert.equal(rex.criado_em.toISOString(), '2023-11-14T22:13:20.000Z');
-  assert.equal(rex.atualizado_em.toISOString(), '2023-11-14T22:13:20.000Z');
-});
+    expect(rex.criado_em.toISOString()).toBe('2023-11-14T22:13:20.000Z');
+    expect(rex.atualizado_em.toISOString()).toBe('2023-11-14T22:13:20.000Z');
+  });
 
-test('atualiza atualizado_em ao editar o pet', () => {
-  const repositorio = criarRepositorioPets(criarBancoEmMemoria());
+  test('atualiza atualizado_em ao editar o pet', () => {
+    const repositorio = criarRepositorioPets(criarBancoEmMemoria());
 
-  const rex = comDateNowFixo(1700000000000, () => repositorio.criarPet('usuario-a', petEntrada));
-  const atualizado = comDateNowFixo(1700000100000, () => repositorio.atualizarPet(
-    rex.id,
-    'usuario-a',
-    { ...petEntrada, nome: 'Rex Atualizado' }
-  ));
+    const rex = comDateNowFixo(1700000000000, () => repositorio.criarPet('usuario-a', petEntrada));
+    const atualizado = comDateNowFixo(1700000100000, () => repositorio.atualizarPet(
+      rex.id,
+      'usuario-a',
+      { ...petEntrada, nome: 'Rex Atualizado' }
+    ));
 
-  assert.equal(atualizado.nome, 'Rex Atualizado');
-  assert.equal(atualizado.criado_em.toISOString(), '2023-11-14T22:13:20.000Z');
-  assert.equal(atualizado.atualizado_em.toISOString(), '2023-11-14T22:15:00.000Z');
-});
+    expect(atualizado.nome).toBe('Rex Atualizado');
+    expect(atualizado.criado_em.toISOString()).toBe('2023-11-14T22:13:20.000Z');
+    expect(atualizado.atualizado_em.toISOString()).toBe('2023-11-14T22:15:00.000Z');
+  });
 
-test('salva e lista apenas pets do usuário atual', () => {
-  const repositorio = criarRepositorioPets(criarBancoEmMemoria());
+  test('salva e lista apenas pets do usuário atual', () => {
+    const repositorio = criarRepositorioPets(criarBancoEmMemoria());
 
-  const rex = repositorio.criarPet('usuario-a', petEntrada);
-  const mel = repositorio.criarPet('usuario-b', { ...petEntrada, nome: 'Mel', sexo: 'Fêmea' });
+    const rex = repositorio.criarPet('usuario-a', petEntrada);
+    const mel = repositorio.criarPet('usuario-b', { ...petEntrada, nome: 'Mel', sexo: 'Fêmea' });
 
-  assert.equal(rex.id_usuario, 'usuario-a');
-  assert.equal(mel.id_usuario, 'usuario-b');
-  assert.deepEqual(repositorio.listarPetsPorUsuario('usuario-a').map((pet) => pet.nome), ['Rex']);
-  assert.deepEqual(repositorio.listarPetsPorUsuario('usuario-b').map((pet) => pet.nome), ['Mel']);
-});
+    expect(rex.id_usuario).toBe('usuario-a');
+    expect(mel.id_usuario).toBe('usuario-b');
+    expect(repositorio.listarPetsPorUsuario('usuario-a').map((pet) => pet.nome)).toEqual(['Rex']);
+    expect(repositorio.listarPetsPorUsuario('usuario-b').map((pet) => pet.nome)).toEqual(['Mel']);
+  });
 
-test('não busca pet de outro usuário por id', () => {
-  const repositorio = criarRepositorioPets(criarBancoEmMemoria());
+  test('não busca pet de outro usuário por id', () => {
+    const repositorio = criarRepositorioPets(criarBancoEmMemoria());
 
-  const rex = repositorio.criarPet('usuario-a', petEntrada);
+    const rex = repositorio.criarPet('usuario-a', petEntrada);
 
-  assert.equal(repositorio.buscarPetPorId(rex.id, 'usuario-b'), null);
-  assert.equal(repositorio.buscarPetPorId(rex.id, 'usuario-a').nome, 'Rex');
-});
+    expect(repositorio.buscarPetPorId(rex.id, 'usuario-b')).toBe(null);
+    expect(repositorio.buscarPetPorId(rex.id, 'usuario-a').nome).toBe('Rex');
+  });
 
-test('atualiza somente pet pertencente ao usuário informado', () => {
-  const repositorio = criarRepositorioPets(criarBancoEmMemoria());
+  test('atualiza somente pet pertencente ao usuário informado', () => {
+    const repositorio = criarRepositorioPets(criarBancoEmMemoria());
 
-  const rex = repositorio.criarPet('usuario-a', petEntrada);
+    const rex = repositorio.criarPet('usuario-a', petEntrada);
 
-  assert.equal(repositorio.atualizarPet(rex.id, 'usuario-b', { ...petEntrada, nome: 'Rex errado' }), null);
-  assert.equal(repositorio.buscarPetPorId(rex.id, 'usuario-a').nome, 'Rex');
-});
+    expect(repositorio.atualizarPet(rex.id, 'usuario-b', { ...petEntrada, nome: 'Rex errado' })).toBe(null);
+    expect(repositorio.buscarPetPorId(rex.id, 'usuario-a').nome).toBe('Rex');
+  });
 
-test('exclui definitivamente apenas pet do usuário informado', () => {
-  const repositorio = criarRepositorioPets(criarBancoEmMemoria());
+  test('exclui definitivamente apenas pet do usuário informado', () => {
+    const repositorio = criarRepositorioPets(criarBancoEmMemoria());
 
-  const rex = repositorio.criarPet('usuario-a', petEntrada);
+    const rex = repositorio.criarPet('usuario-a', petEntrada);
 
-  assert.equal(repositorio.excluirPet(rex.id, 'usuario-b'), 0);
-  assert.equal(repositorio.buscarPetPorId(rex.id, 'usuario-a').nome, 'Rex');
+    expect(repositorio.excluirPet(rex.id, 'usuario-b')).toBe(0);
+    expect(repositorio.buscarPetPorId(rex.id, 'usuario-a').nome).toBe('Rex');
 
-  assert.equal(repositorio.excluirPet(rex.id, 'usuario-a'), 1);
-  assert.equal(repositorio.buscarPetPorId(rex.id, 'usuario-a'), null);
+    expect(repositorio.excluirPet(rex.id, 'usuario-a')).toBe(1);
+    expect(repositorio.buscarPetPorId(rex.id, 'usuario-a')).toBe(null);
+  });
 });
