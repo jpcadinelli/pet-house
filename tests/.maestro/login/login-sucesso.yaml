@@ -13,4 +13,4 @@ appId: host.exp.exponent
     id: login-button
 
 
-# maestro test tests/login/.maestro/login-sucesso.yaml
+# maestro test tests/.maestro/login/login-sucesso.yaml

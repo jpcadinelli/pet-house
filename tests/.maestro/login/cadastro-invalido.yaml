@@ -13,12 +13,14 @@ appId: host.exp.exponent
 - inputText: "123456"
 
 - tapOn: "Confirmar senha"
-- inputText: "123456"
+- inputText: "654321"
 
 - hideKeyboard
 
 - tapOn:
     id: login-button
 
+- assertVisible: "As senhas não coincidem."
 
-# maestro test tests/login/.maestro/cadastro.yaml
+
+# maestro test tests/.maestro/login/cadastro-invalido.yaml
