@@ -1,45 +1,39 @@
 const React = require('react');
 const { describe, expect, jest, test } = require('@jest/globals');
-const TestingLibrary = require('@testing-library/react-native');
+const { fireEvent, render } = require('@testing-library/react-native');
 
 const { HomeScreen } = require('../src/features/home/screens/HomeScreen');
 
 async function renderHomeScreen(props = {}) {
-  await TestingLibrary.render(
-    React.createElement(HomeScreen, {
-      biometria: true,
-      hasSavedBiometricLogin: false,
-      onBiometricLogin: jest.fn(),
-      onCredentialLogin: jest.fn(),
-      onRegister: jest.fn(),
-      ...props,
-    })
-  );
-
-  return TestingLibrary.screen;
+  return await render(React.createElement(HomeScreen, {
+    biometria: true,
+    hasSavedBiometricLogin: false,
+    onBiometricLogin: jest.fn(),
+    onCredentialLogin: jest.fn(),
+    onRegister: jest.fn(),
+    ...props,
+  }));
 }
 
 describe('HomeScreen', () => {
   test('renderiza o formulário de login com campos e ações principais', async () => {
-    const screen = await renderHomeScreen();
+    const { getAllByText, getByPlaceholderText, getByText } = await renderHomeScreen();
 
-    expect(screen.getAllByText('Entrar')).toHaveLength(2);
-    expect(screen.getByPlaceholderText('Email')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Senha')).toBeTruthy();
-    expect(screen.getByText('Habilitar entrada com biometria')).toBeTruthy();
-    expect(screen.getByText('Não possui conta? Criar conta')).toBeTruthy();
+    expect(getAllByText('Entrar')).toHaveLength(2);
+    expect(getByPlaceholderText('Email')).toBeTruthy();
+    expect(getByPlaceholderText('Senha')).toBeTruthy();
+    expect(getByText('Habilitar entrada com biometria')).toBeTruthy();
+    expect(getByText('Não possui conta? Criar conta')).toBeTruthy();
   });
 
   test('exibe campos de cadastro ao alternar para criar conta', async () => {
-    const screen = await renderHomeScreen();
+    const { getAllByText, getByPlaceholderText, getByText } = await renderHomeScreen();
 
-    await TestingLibrary.fireEvent.press(
-      screen.getByText('Não possui conta? Criar conta')
-    );
+    await fireEvent.press(getByText('Não possui conta? Criar conta'));
 
-    expect(screen.getAllByText('Criar Conta')).toHaveLength(2);
-    expect(screen.getByPlaceholderText('Nome')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Confirmar senha')).toBeTruthy();
-    expect(screen.getByText('Já possui conta? Entrar')).toBeTruthy();
+    expect(getAllByText('Criar Conta')).toHaveLength(2);
+    expect(getByPlaceholderText('Nome')).toBeTruthy();
+    expect(getByPlaceholderText('Confirmar senha')).toBeTruthy();
+    expect(getByText('Já possui conta? Entrar')).toBeTruthy();
   });
 });
