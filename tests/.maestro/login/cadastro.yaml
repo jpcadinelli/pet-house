@@ -1,0 +1,24 @@
+appId: host.exp.exponent
+
+---
+- tapOn: "Não possui conta? Criar conta"
+
+- tapOn: "Nome"
+- inputText: "Julio"
+
+- tapOn: "Email"
+- inputText: "julio@email.com"
+
+- tapOn: "Senha"
+- inputText: "123456"
+
+- tapOn: "Confirmar senha"
+- inputText: "123456"
+
+- hideKeyboard
+
+- tapOn:
+    id: login-button
+
+
+# maestro test tests/.maestro/login/cadastro.yaml

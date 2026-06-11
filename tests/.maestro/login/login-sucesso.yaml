@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+
+---
+- tapOn: "Email"
+- inputText: "teste@email.com"
+
+- tapOn: "Senha"
+- inputText: "123456"
+
+- hideKeyboard
+
+- tapOn:
+    id: login-button
+
+
+# maestro test tests/.maestro/login/login-sucesso.yaml
