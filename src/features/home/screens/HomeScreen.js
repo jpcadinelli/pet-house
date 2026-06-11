@@ -122,6 +122,7 @@ export function HomeScreen({
         )}
 
         <TouchableOpacity
+          testID="login-button"
           style={appStyles.button}
           onPress={
             isRegistering
