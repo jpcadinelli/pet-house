@@ -50,10 +50,8 @@ function mapearLinhaVacina(linha) {
     proxima_dose: proximaDose,
     observacoes: linha.observacoes,
     status: calcularStatusVacina(proximaDose) || linha.status,
-    sincronizado: linha.sincronizado,
     criado_em: converterTimestampParaData(linha.criado_em),
     atualizado_em: converterTimestampParaData(linha.atualizado_em),
-    excluido_em: converterTimestampParaData(linha.excluido_em),
   };
 }
 
@@ -105,11 +103,9 @@ function criarVacina(database, idUsuario, entrada) {
       proxima_dose,
       observacoes,
       status,
-      sincronizado,
       criado_em,
-      atualizado_em,
-      excluido_em
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      atualizado_em
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       vacina.id_pet,
       idUsuarioNormalizado,
@@ -118,10 +114,8 @@ function criarVacina(database, idUsuario, entrada) {
       converterDataParaTimestamp(vacina.proxima_dose),
       vacina.observacoes,
       status,
-      0,
       agoraUtc,
       agoraUtc,
-      null,
     ]
   );
 
@@ -131,7 +125,7 @@ function criarVacina(database, idUsuario, entrada) {
 function listarVacinasPorUsuario(database, idUsuario) {
   const idUsuarioNormalizado = garantirIdUsuario(idUsuario);
   const [sql, params] = selecionarVacinasBase(
-    'vacinas.id_usuario = ? AND vacinas.excluido_em IS NULL',
+    'vacinas.id_usuario = ?',
     [idUsuarioNormalizado]
   );
   const linhas = database.getAllSync(sql, params);
@@ -148,7 +142,7 @@ function listarVacinasPorPet(database, idUsuario, idPet) {
   }
 
   const [sql, params] = selecionarVacinasBase(
-    'vacinas.id_usuario = ? AND vacinas.id_pet = ? AND vacinas.excluido_em IS NULL',
+    'vacinas.id_usuario = ? AND vacinas.id_pet = ?',
     [idUsuarioNormalizado, idPetNormalizado]
   );
   const linhas = database.getAllSync(sql, params);
@@ -159,7 +153,7 @@ function listarVacinasPorPet(database, idUsuario, idPet) {
 function buscarVacinaPorId(database, idUsuario, idVacina) {
   const idUsuarioNormalizado = garantirIdUsuario(idUsuario);
   const [sql, params] = selecionarVacinasBase(
-    'vacinas.id = ? AND vacinas.id_usuario = ? AND vacinas.excluido_em IS NULL',
+    'vacinas.id = ? AND vacinas.id_usuario = ?',
     [idVacina, idUsuarioNormalizado]
   );
 
@@ -186,9 +180,8 @@ function atualizarVacina(database, idUsuario, idVacina, entrada) {
          proxima_dose = ?,
          observacoes = ?,
          status = ?,
-         sincronizado = 0,
          atualizado_em = ?
-     WHERE id = ? AND id_usuario = ? AND excluido_em IS NULL`,
+     WHERE id = ? AND id_usuario = ?`,
     [
       vacina.id_pet,
       vacina.nome,
@@ -207,14 +200,9 @@ function atualizarVacina(database, idUsuario, idVacina, entrada) {
 
 function excluirVacina(database, idUsuario, idVacina) {
   const idUsuarioNormalizado = garantirIdUsuario(idUsuario);
-  const excluidoEmUtc = Date.now();
   const resultado = database.runSync(
-    `UPDATE vacinas
-     SET excluido_em = ?,
-         atualizado_em = ?,
-         sincronizado = 0
-     WHERE id = ? AND id_usuario = ? AND excluido_em IS NULL`,
-    [excluidoEmUtc, excluidoEmUtc, idVacina, idUsuarioNormalizado]
+    'DELETE FROM vacinas WHERE id = ? AND id_usuario = ?',
+    [idVacina, idUsuarioNormalizado]
   );
 
   return resultado.changes || 0;
@@ -222,14 +210,9 @@ function excluirVacina(database, idUsuario, idVacina) {
 
 function excluirVacinasPorPet(database, idUsuario, idPet) {
   const idUsuarioNormalizado = garantirIdUsuario(idUsuario);
-  const excluidoEmUtc = Date.now();
   const resultado = database.runSync(
-    `UPDATE vacinas
-     SET excluido_em = ?,
-         atualizado_em = ?,
-         sincronizado = 0
-     WHERE id_pet = ? AND id_usuario = ? AND excluido_em IS NULL`,
-    [excluidoEmUtc, excluidoEmUtc, idPet, idUsuarioNormalizado]
+    'DELETE FROM vacinas WHERE id_pet = ? AND id_usuario = ?',
+    [idPet, idUsuarioNormalizado]
   );
 
   return resultado.changes || 0;

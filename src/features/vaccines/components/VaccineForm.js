@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 
+import CalendarDateInput from '../../../shared/components/CalendarDateInput';
 import { vaccineStyles } from '../../../shared/styles/vaccine.styles';
 
 function renderFieldError(errors, field) {
@@ -71,33 +72,19 @@ export default function VaccineForm({
       {renderFieldError(errors, 'nome')}
 
       <Text style={vaccineStyles.inputLabel}>Data de aplicação</Text>
-      <TextInput
-        placeholder="AAAA-MM-DD"
-        placeholderTextColor="#7d8590"
-        keyboardType="numbers-and-punctuation"
-        style={[
-          vaccineStyles.input,
-          errors.data_aplicacao && vaccineStyles.inputError,
-        ]}
+      <CalendarDateInput
         value={form.data_aplicacao}
-        onChangeText={(value) => onChange('data_aplicacao', value)}
+        onChange={(value) => onChange('data_aplicacao', value)}
+        error={Boolean(errors.data_aplicacao)}
       />
-      <Text style={vaccineStyles.helperText}>
-        Campo opcional. Use o formato AAAA-MM-DD.
-      </Text>
+      <Text style={vaccineStyles.helperText}>Campo opcional.</Text>
       {renderFieldError(errors, 'data_aplicacao')}
 
       <Text style={vaccineStyles.inputLabel}>Próxima dose *</Text>
-      <TextInput
-        placeholder="AAAA-MM-DD"
-        placeholderTextColor="#7d8590"
-        keyboardType="numbers-and-punctuation"
-        style={[
-          vaccineStyles.input,
-          errors.proxima_dose && vaccineStyles.inputError,
-        ]}
+      <CalendarDateInput
         value={form.proxima_dose}
-        onChangeText={(value) => onChange('proxima_dose', value)}
+        onChange={(value) => onChange('proxima_dose', value)}
+        error={Boolean(errors.proxima_dose)}
       />
       <Text style={vaccineStyles.helperText}>
         O status é calculado automaticamente a partir desta data.
