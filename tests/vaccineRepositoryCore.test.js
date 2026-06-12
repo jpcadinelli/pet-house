@@ -1,6 +1,3 @@
-const assert = require('node:assert/strict');
-const test = require('node:test');
-
 const consultasVacinas = require('../src/features/database/consultas/vacinas');
 
 function criarPet(id, idUsuario, nome) {
@@ -203,14 +200,14 @@ test('cria vacina local sem campos de sincronização', () => {
     consultasVacinas.criarVacina(database, 'usuario-a', VACINA_ENTRADA)
   );
 
-  assert.equal(vacina.id_usuario, 'usuario-a');
-  assert.equal(vacina.nome_pet, 'Rex');
-  assert.equal(vacina.data_aplicacao, null);
-  assert.equal(vacina.proxima_dose.toISOString(), '2099-01-10T00:00:00.000Z');
-  assert.equal(vacina.criado_em.toISOString(), '2023-11-14T22:13:20.000Z');
-  assert.equal(vacina.atualizado_em.toISOString(), '2023-11-14T22:13:20.000Z');
-  assert.equal(Object.hasOwn(vacina, 'sincronizado'), false);
-  assert.equal(Object.hasOwn(vacina, 'excluido_em'), false);
+  expect(vacina.id_usuario).toBe('usuario-a');
+  expect(vacina.nome_pet).toBe('Rex');
+  expect(vacina.data_aplicacao).toBeNull();
+  expect(vacina.proxima_dose.toISOString()).toBe('2099-01-10T00:00:00.000Z');
+  expect(vacina.criado_em.toISOString()).toBe('2023-11-14T22:13:20.000Z');
+  expect(vacina.atualizado_em.toISOString()).toBe('2023-11-14T22:13:20.000Z');
+  expect(vacina).not.toHaveProperty('sincronizado');
+  expect(vacina).not.toHaveProperty('excluido_em');
 });
 
 test('lista vacinas apenas do usuário e pet informados', () => {
@@ -223,15 +220,13 @@ test('lista vacinas apenas do usuário e pet informados', () => {
     nome: 'V10',
   });
 
-  assert.deepEqual(
+  expect(
     consultasVacinas.listarVacinasPorUsuario(database, 'usuario-a').map((vacina) => vacina.nome),
-    ['Antirrábica']
-  );
-  assert.deepEqual(
+  ).toEqual(['Antirrábica']);
+  expect(
     consultasVacinas.listarVacinasPorPet(database, 'usuario-a', 1).map((vacina) => vacina.nome),
-    ['Antirrábica']
-  );
-  assert.deepEqual(consultasVacinas.listarVacinasPorPet(database, 'usuario-a', 2), []);
+  ).toEqual(['Antirrábica']);
+  expect(consultasVacinas.listarVacinasPorPet(database, 'usuario-a', 2)).toEqual([]);
 });
 
 test('atualiza vacina mantendo criado_em e atualizando atualizado_em', () => {
@@ -250,22 +245,22 @@ test('atualiza vacina mantendo criado_em e atualizando atualizado_em', () => {
     })
   );
 
-  assert.equal(atualizada.nome, 'Antirrábica anual');
-  assert.equal(atualizada.data_aplicacao.toISOString(), '2026-01-10T00:00:00.000Z');
-  assert.equal(atualizada.proxima_dose.toISOString(), '2099-02-10T00:00:00.000Z');
-  assert.equal(atualizada.criado_em.toISOString(), '2023-11-14T22:13:20.000Z');
-  assert.equal(atualizada.atualizado_em.toISOString(), '2023-11-14T22:15:00.000Z');
+  expect(atualizada.nome).toBe('Antirrábica anual');
+  expect(atualizada.data_aplicacao.toISOString()).toBe('2026-01-10T00:00:00.000Z');
+  expect(atualizada.proxima_dose.toISOString()).toBe('2099-02-10T00:00:00.000Z');
+  expect(atualizada.criado_em.toISOString()).toBe('2023-11-14T22:13:20.000Z');
+  expect(atualizada.atualizado_em.toISOString()).toBe('2023-11-14T22:15:00.000Z');
 });
 
 test('exclui vacina definitivamente apenas do usuário informado', () => {
   const database = criarBancoEmMemoria();
   const vacina = consultasVacinas.criarVacina(database, 'usuario-a', VACINA_ENTRADA);
 
-  assert.equal(consultasVacinas.excluirVacina(database, 'usuario-b', vacina.id), 0);
-  assert.equal(consultasVacinas.buscarVacinaPorId(database, 'usuario-a', vacina.id).nome, 'Antirrábica');
+  expect(consultasVacinas.excluirVacina(database, 'usuario-b', vacina.id)).toBe(0);
+  expect(consultasVacinas.buscarVacinaPorId(database, 'usuario-a', vacina.id).nome).toBe('Antirrábica');
 
-  assert.equal(consultasVacinas.excluirVacina(database, 'usuario-a', vacina.id), 1);
-  assert.equal(consultasVacinas.buscarVacinaPorId(database, 'usuario-a', vacina.id), null);
+  expect(consultasVacinas.excluirVacina(database, 'usuario-a', vacina.id)).toBe(1);
+  expect(consultasVacinas.buscarVacinaPorId(database, 'usuario-a', vacina.id)).toBeNull();
 });
 
 test('exclui vacinas por pet com delete físico local', () => {
@@ -283,10 +278,9 @@ test('exclui vacinas por pet com delete físico local', () => {
     nome: 'V10',
   });
 
-  assert.equal(consultasVacinas.excluirVacinasPorPet(database, 'usuario-a', 1), 2);
-  assert.deepEqual(consultasVacinas.listarVacinasPorPet(database, 'usuario-a', 1), []);
-  assert.deepEqual(
+  expect(consultasVacinas.excluirVacinasPorPet(database, 'usuario-a', 1)).toBe(2);
+  expect(consultasVacinas.listarVacinasPorPet(database, 'usuario-a', 1)).toEqual([]);
+  expect(
     consultasVacinas.listarVacinasPorUsuario(database, 'usuario-b').map((vacina) => vacina.nome),
-    ['V10']
-  );
+  ).toEqual(['V10']);
 });

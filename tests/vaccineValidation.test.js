@@ -1,6 +1,3 @@
-const assert = require('node:assert/strict');
-const test = require('node:test');
-
 const {
   criarFormularioVacinaVazio,
   formatarVacinaParaFormulario,
@@ -18,18 +15,18 @@ const VACINA_VALIDA = {
 test('mantém data_aplicacao opcional e normaliza proxima_dose', () => {
   const resultado = validarVacina(VACINA_VALIDA);
 
-  assert.equal(resultado.valido, true);
-  assert.deepEqual(resultado.erros, {});
-  assert.equal(resultado.dados.data_aplicacao, null);
-  assert.ok(resultado.dados.proxima_dose instanceof Date);
-  assert.equal(resultado.dados.proxima_dose.toISOString(), '2099-01-10T00:00:00.000Z');
+  expect(resultado.valido).toBe(true);
+  expect(resultado.erros).toEqual({});
+  expect(resultado.dados.data_aplicacao).toBeNull();
+  expect(resultado.dados.proxima_dose).toBeInstanceOf(Date);
+  expect(resultado.dados.proxima_dose.toISOString()).toBe('2099-01-10T00:00:00.000Z');
 });
 
 test('mantém proxima_dose obrigatória', () => {
   const resultado = validarVacina({ ...VACINA_VALIDA, proxima_dose: '' });
 
-  assert.equal(resultado.valido, false);
-  assert.equal(resultado.erros.proxima_dose, 'Informe a data da próxima dose.');
+  expect(resultado.valido).toBe(false);
+  expect(resultado.erros.proxima_dose).toBe('Informe a data da próxima dose.');
 });
 
 test('cria formulário vazio e formata datas para YYYY-MM-DD', () => {
@@ -42,13 +39,13 @@ test('cria formulário vazio e formata datas para YYYY-MM-DD', () => {
     observacoes: null,
   });
 
-  assert.deepEqual(formularioVazio, {
+  expect(formularioVazio).toEqual({
     id_pet: '3',
     nome: '',
     data_aplicacao: '',
     proxima_dose: '',
     observacoes: '',
   });
-  assert.equal(formularioEdicao.data_aplicacao, '2026-03-05');
-  assert.equal(formularioEdicao.proxima_dose, '2027-03-05');
+  expect(formularioEdicao.data_aplicacao).toBe('2026-03-05');
+  expect(formularioEdicao.proxima_dose).toBe('2027-03-05');
 });
