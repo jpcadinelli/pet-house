@@ -187,7 +187,6 @@ export const profileStyles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 14,
-    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     shadowColor: '#0f172a',
@@ -257,24 +256,10 @@ export const profileStyles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#EEF5FF',
   },
-  petActionButtonDanger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: '#FEF3F2',
-  },
   petActionText: {
     fontSize: 13,
     fontWeight: '700',
     color: '#0B3C78',
-  },
-  petActionTextDanger: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#B42318',
   },
   backButton: {
     alignSelf: 'flex-start',
