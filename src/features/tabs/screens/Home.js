@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
 } from 'react-native';
-import { fetchNearbyPetPlaces } from '../../services/petPlacesService';
+import { loadNearbyPetPlaces } from '../../services/petPlacesService';
 import { homeStyles } from '../../../shared/styles/home.styles';
 
 const LOCATION_MESSAGES = {
@@ -61,6 +61,22 @@ function includesSearchTerm(place, search) {
   return searchableText.includes(normalizedSearch);
 }
 
+function formatCacheNotice(cacheUpdatedAt) {
+  const message = 'Exibindo últimos empreendimentos salvos.';
+
+  if (!cacheUpdatedAt) {
+    return message;
+  }
+
+  return `${message} Atualizado em ${cacheUpdatedAt.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })}.`;
+}
+
 export default function Home() {
   const [places, setPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +89,8 @@ export default function Home() {
   const [locationMessageType, setLocationMessageType] = useState('info');
   const [placesLoading, setPlacesLoading] = useState(false);
   const [placesError, setPlacesError] = useState('');
+  const [placesSource, setPlacesSource] = useState('online');
+  const [cacheUpdatedAt, setCacheUpdatedAt] = useState(null);
   const isMountedRef = useRef(true);
   const requestIdRef = useRef(0);
 
@@ -85,7 +103,7 @@ export default function Home() {
     setPlacesError('');
 
     try {
-      const data = await fetchNearbyPetPlaces(
+      const result = await loadNearbyPetPlaces(
         location.latitude,
         location.longitude,
         { forceRefresh }
@@ -95,13 +113,18 @@ export default function Home() {
         return;
       }
 
-      setPlaces(data);
+      if (result.places.length > 0 || !result.errorMessage) {
+        setPlaces(result.places);
+      }
+
+      setPlacesSource(result.source);
+      setCacheUpdatedAt(result.cacheUpdatedAt);
+      setPlacesError(result.errorMessage || '');
     } catch (error) {
       if (!isMountedRef.current || requestIdRef.current !== requestId) {
         return;
       }
 
-      setPlaces([]);
       setPlacesError(
         error instanceof Error
           ? error.message
@@ -137,6 +160,8 @@ export default function Home() {
       if (permission.status !== 'granted') {
         setUserLocation(null);
         setPlaces([]);
+        setPlacesSource('online');
+        setCacheUpdatedAt(null);
         setLocationMessage(LOCATION_MESSAGES.denied);
         setLocationMessageType('error');
         return;
@@ -169,6 +194,8 @@ export default function Home() {
 
       setUserLocation(null);
       setPlaces([]);
+      setPlacesSource('online');
+      setCacheUpdatedAt(null);
       setLocationMessage(LOCATION_MESSAGES.fallback);
       setLocationMessageType('error');
     } finally {
@@ -260,6 +287,12 @@ export default function Home() {
         onChangeText={setSearch}
         style={homeStyles.searchInput}
       />
+
+      {placesSource === 'cache' ? (
+        <Text style={homeStyles.cacheBanner}>
+          {formatCacheNotice(cacheUpdatedAt)}
+        </Text>
+      ) : null}
 
       {placesLoading && !refreshing ? (
         <View style={homeStyles.inlineStatus}>

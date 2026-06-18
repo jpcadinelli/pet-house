@@ -111,6 +111,17 @@ export const mapStyles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 8,
   },
+  cacheBanner: {
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFF7ED',
+    color: '#9A3412',
+    fontSize: 13,
+    lineHeight: 18,
+  },
   buttonGroup: {
     marginTop: 12,
   },

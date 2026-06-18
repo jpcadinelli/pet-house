@@ -3,7 +3,7 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { fetchNearbyPetPlaces } from '../../services/petPlacesService';
+import { loadNearbyPetPlaces } from '../../services/petPlacesService';
 import { mapStyles } from '../../../shared/styles/map.styles';
 
 const MAP_DELTAS = {
@@ -27,6 +27,22 @@ function createRegion({ latitude, longitude }) {
   };
 }
 
+function formatCacheNotice(cacheUpdatedAt) {
+  const message = 'Exibindo últimos empreendimentos salvos.';
+
+  if (!cacheUpdatedAt) {
+    return message;
+  }
+
+  return `${message} Atualizado em ${cacheUpdatedAt.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })}.`;
+}
+
 export default function MapScreen() {
   const [reloadKey, setReloadKey] = useState(0);
   const [searchLocation, setSearchLocation] = useState(null);
@@ -34,6 +50,8 @@ export default function MapScreen() {
   const [places, setPlaces] = useState([]);
   const [placesLoading, setPlacesLoading] = useState(false);
   const [placesError, setPlacesError] = useState('');
+  const [placesSource, setPlacesSource] = useState('online');
+  const [cacheUpdatedAt, setCacheUpdatedAt] = useState(null);
   const [isOpen, setIsOpen] = useState(true);
   const [locationLoading, setLocationLoading] = useState(true);
   const [locationMessage, setLocationMessage] = useState(LOCATION_MESSAGES.loading);
@@ -61,6 +79,8 @@ export default function MapScreen() {
       if (permission.status !== 'granted') {
         setSearchLocation(null);
         setPlaces([]);
+        setPlacesSource('online');
+        setCacheUpdatedAt(null);
         setLocationMessage(LOCATION_MESSAGES.denied);
         setLocationMessageType('error');
         return;
@@ -90,6 +110,8 @@ export default function MapScreen() {
 
       setSearchLocation(null);
       setPlaces([]);
+      setPlacesSource('online');
+      setCacheUpdatedAt(null);
       setLocationMessage(LOCATION_MESSAGES.fallback);
       setLocationMessageType('error');
     } finally {
@@ -129,7 +151,7 @@ export default function MapScreen() {
       setPlacesError('');
 
       try {
-        const nearbyPlaces = await fetchNearbyPetPlaces(
+        const result = await loadNearbyPetPlaces(
           searchLocation.latitude,
           searchLocation.longitude,
           { forceRefresh: reloadKey > 0 }
@@ -139,7 +161,13 @@ export default function MapScreen() {
           return;
         }
 
-        setPlaces(nearbyPlaces);
+        if (result.places.length > 0 || !result.errorMessage) {
+          setPlaces(result.places);
+        }
+
+        setPlacesSource(result.source);
+        setCacheUpdatedAt(result.cacheUpdatedAt);
+        setPlacesError(result.errorMessage || '');
       } catch (error) {
         if (!isActive) {
           return;
@@ -281,6 +309,12 @@ export default function MapScreen() {
                   {locationMessage}
                 </Text>
               )}
+
+              {hasUserLocation && placesSource === 'cache' ? (
+                <Text style={mapStyles.cacheBanner}>
+                  {formatCacheNotice(cacheUpdatedAt)}
+                </Text>
+              ) : null}
 
               {hasUserLocation && placesLoading ? (
                 <View style={mapStyles.statusRow}>

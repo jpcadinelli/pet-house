@@ -175,6 +175,18 @@ export const homeStyles = StyleSheet.create({
     lineHeight: 20,
     color: '#B42318',
   },
+  cacheBanner: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    backgroundColor: '#FFF7ED',
+    color: '#9A3412',
+    fontSize: 13,
+    lineHeight: 18,
+  },
   listEmptyContent: {
     flexGrow: 1,
   },
