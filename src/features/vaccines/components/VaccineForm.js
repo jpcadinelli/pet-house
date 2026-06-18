@@ -20,6 +20,9 @@ export default function VaccineForm({
   pets,
 }) {
   const selectedPetId = String(form.id_pet || '');
+  const availablePets = editing
+    ? pets.filter((pet) => String(pet.id) === selectedPetId)
+    : pets;
 
   return (
     <View style={vaccineStyles.formCard}>
@@ -29,7 +32,7 @@ export default function VaccineForm({
 
       <Text style={vaccineStyles.inputLabel}>Pet *</Text>
       <View style={vaccineStyles.petChipWrap}>
-        {pets.map((pet) => {
+        {availablePets.map((pet) => {
           const selected = String(pet.id) === selectedPetId;
 
           return (
@@ -39,6 +42,7 @@ export default function VaccineForm({
                 vaccineStyles.petChip,
                 selected && vaccineStyles.petChipSelected,
               ]}
+              disabled={editing}
               onPress={() => onChange('id_pet', String(pet.id))}
               activeOpacity={0.85}
             >

@@ -2,10 +2,16 @@ import {
   getPetPlaceCategory,
   getPetPlaceCategoryMeta,
 } from '../../shared/constants/petPlaceCategories';
+import {
+  getPetPlacesCache,
+  savePetPlacesCache,
+} from './petPlacesCacheRepository';
 
 const SEARCH_RADIUS_METERS = 25000;
 const OVERPASS_TIMEOUT_MS = 15000;
 const CACHE_TTL_MS = 60000;
+const LOAD_ERROR_MESSAGE =
+  'Não foi possível carregar empreendimentos pet próximos. Verifique sua conexão e tente novamente.';
 const OVERPASS_API_URLS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -30,9 +36,53 @@ const QUERY_PROFILES = [
 
 let cachedResult = null;
 let cachedResultAt = 0;
+let cachedResultUpdatedAt = null;
+let cachedResultSource = 'online';
 let cachedKey = '';
 let inflightRequest = null;
 let inflightKey = '';
+
+function normalizeCoordinate(value) {
+  const coordinate = Number(value);
+
+  if (!Number.isFinite(coordinate)) {
+    throw new Error('Coordenadas inválidas para buscar empreendimentos pet.');
+  }
+
+  return coordinate;
+}
+
+export function buildPetPlacesCacheKey(latitude, longitude) {
+  return `${normalizeCoordinate(latitude).toFixed(3)}:${normalizeCoordinate(longitude).toFixed(3)}`;
+}
+
+function getCacheUpdatedAt() {
+  if (!cachedResultUpdatedAt) {
+    return null;
+  }
+
+  const updatedAt = new Date(cachedResultUpdatedAt);
+  return Number.isNaN(updatedAt.getTime()) ? null : updatedAt;
+}
+
+function getFreshMemoryCache(cacheKey, forceRefresh, { allowCachedSource = true } = {}) {
+  const cacheIsFresh =
+    !forceRefresh &&
+    cachedKey === cacheKey &&
+    Array.isArray(cachedResult) &&
+    Date.now() - cachedResultAt < CACHE_TTL_MS &&
+    (allowCachedSource || cachedResultSource === 'online');
+
+  return cacheIsFresh ? cachedResult : null;
+}
+
+function updateMemoryCache(cacheKey, places, updatedAt, source = 'online') {
+  cachedKey = cacheKey;
+  cachedResult = places;
+  cachedResultAt = Date.now();
+  cachedResultUpdatedAt = updatedAt || cachedResultAt;
+  cachedResultSource = source;
+}
 
 function buildElementQueries(elementType, latitude, longitude, radius) {
   return OVERPASS_TAG_FILTERS.map(
@@ -180,29 +230,19 @@ async function requestNearbyPetPlaces(latitude, longitude) {
   );
 }
 
-export async function fetchNearbyPetPlaces(latitude, longitude, options = {}) {
-  const { forceRefresh = false } = options;
-  const key = `${latitude}:${longitude}`;
-  const cacheIsFresh =
-    !forceRefresh &&
-    cachedKey === key &&
-    cachedResult &&
-    Date.now() - cachedResultAt < CACHE_TTL_MS;
-
-  if (cacheIsFresh) {
-    return cachedResult;
-  }
-
-  if (!forceRefresh && inflightRequest && inflightKey === key) {
+async function fetchAndStoreNearbyPetPlaces(latitude, longitude, cacheKey) {
+  if (inflightRequest && inflightKey === cacheKey) {
     return inflightRequest;
   }
 
-  inflightKey = key;
+  inflightKey = cacheKey;
   inflightRequest = requestNearbyPetPlaces(latitude, longitude)
     .then((places) => {
-      cachedKey = key;
-      cachedResult = places;
-      cachedResultAt = Date.now();
+      const updatedAt = Date.now();
+
+      updateMemoryCache(cacheKey, places, updatedAt, 'online');
+      savePetPlacesCache(cacheKey, latitude, longitude, places, updatedAt);
+
       return places;
     })
     .finally(() => {
@@ -211,4 +251,87 @@ export async function fetchNearbyPetPlaces(latitude, longitude, options = {}) {
     });
 
   return inflightRequest;
+}
+
+export async function fetchNearbyPetPlaces(latitude, longitude, options = {}) {
+  const { forceRefresh = false } = options;
+  const key = buildPetPlacesCacheKey(latitude, longitude);
+  const memoryCache = getFreshMemoryCache(key, forceRefresh, {
+    allowCachedSource: false,
+  });
+
+  if (memoryCache) {
+    return memoryCache;
+  }
+
+  return fetchAndStoreNearbyPetPlaces(latitude, longitude, key);
+}
+
+export async function loadNearbyPetPlaces(latitude, longitude, options = {}) {
+  const { forceRefresh = false } = options;
+  let cacheKey;
+
+  try {
+    cacheKey = buildPetPlacesCacheKey(latitude, longitude);
+  } catch (error) {
+    return {
+      places: [],
+      source: 'online',
+      cacheUpdatedAt: null,
+      errorMessage:
+        error instanceof Error ? error.message : LOAD_ERROR_MESSAGE,
+    };
+  }
+
+  const memoryCache = getFreshMemoryCache(cacheKey, forceRefresh);
+
+  if (memoryCache) {
+    return {
+      places: memoryCache,
+      source: cachedResultSource === 'cache' ? 'cache' : 'memory',
+      cacheUpdatedAt: getCacheUpdatedAt(),
+      errorMessage: null,
+    };
+  }
+
+  try {
+    const places = await fetchAndStoreNearbyPetPlaces(
+      latitude,
+      longitude,
+      cacheKey
+    );
+
+    return {
+      places,
+      source: 'online',
+      cacheUpdatedAt: getCacheUpdatedAt(),
+      errorMessage: null,
+    };
+  } catch (error) {
+    const cachedPlaces = getPetPlacesCache(cacheKey);
+
+    if (cachedPlaces) {
+      const cacheUpdatedAt = cachedPlaces.atualizadoEm || null;
+      updateMemoryCache(
+        cacheKey,
+        cachedPlaces.places,
+        cacheUpdatedAt ? cacheUpdatedAt.getTime() : Date.now(),
+        'cache'
+      );
+
+      return {
+        places: cachedPlaces.places,
+        source: 'cache',
+        cacheUpdatedAt,
+        errorMessage: null,
+      };
+    }
+
+    return {
+      places: [],
+      source: 'online',
+      cacheUpdatedAt: null,
+      errorMessage: LOAD_ERROR_MESSAGE,
+    };
+  }
 }
