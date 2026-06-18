@@ -332,7 +332,7 @@ export default function Profile({
   const confirmDeletePet = (pet) => {
     Alert.alert(
       'Excluir pet',
-      `Deseja excluir ${pet.nome} definitivamente?`,
+      `Deseja excluir ${pet.nome} definitivamente?\n\nAs vacinas vinculadas a este pet tambem serao removidas. Essa acao nao podera ser desfeita.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
