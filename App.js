@@ -1,5 +1,6 @@
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { SecureScreen } from './src/features/auth/screens/SecureScreen';
@@ -166,27 +167,37 @@ export default function App() {
 
   if (authenticated) {
     return (
-      <SafeAreaProvider>
-        <SecureScreen
-          authMethod={authMethod}
-          userEmail={savedSession?.email}
-          idUsuario={savedSession?.idUsuario}
-          userNome={savedSession?.nome}
-          onLogout={handleLogout}
-        />
-      </SafeAreaProvider>
+      <GestureHandlerRootView style={styles.gestureRoot}>
+        <SafeAreaProvider>
+          <SecureScreen
+            authMethod={authMethod}
+            userEmail={savedSession?.email}
+            idUsuario={savedSession?.idUsuario}
+            userNome={savedSession?.nome}
+            onLogout={handleLogout}
+          />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     );
   }
 
   return (
-    <SafeAreaProvider>
-      <HomeScreen
-        biometria={biometria}
-        hasSavedBiometricLogin={Boolean(savedSession?.isLoggedIn && savedSession?.biometricEnabled)}
-        onBiometricLogin={handleBiometricAccess}
-        onCredentialLogin={handleCredentialLogin}
-        onRegister={handleRegister}
-      />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.gestureRoot}>
+      <SafeAreaProvider>
+        <HomeScreen
+          biometria={biometria}
+          hasSavedBiometricLogin={Boolean(savedSession?.isLoggedIn && savedSession?.biometricEnabled)}
+          onBiometricLogin={handleBiometricAccess}
+          onCredentialLogin={handleCredentialLogin}
+          onRegister={handleRegister}
+        />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  gestureRoot: {
+    flex: 1,
+  },
+});

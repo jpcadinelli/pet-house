@@ -20,6 +20,7 @@ import CalendarDateInput, {
   formatarDataCalendarioParaUsuario,
   obterHojeUtcZerado,
 } from '../../../shared/components/CalendarDateInput';
+import SwipeableListItem from '../../../shared/components/SwipeableListItem';
 import { appStyles } from '../../../shared/styles/app.styles';
 import { profileStyles } from '../../../shared/styles/profile.styles';
 
@@ -450,33 +451,29 @@ export default function Profile({
         </View>
       ) : (
         pets.map((pet) => (
-          <View key={pet.id} style={profileStyles.petCard}>
-            {renderPetPhoto(pet)}
+          <SwipeableListItem
+            key={pet.id}
+            onEdit={() => openEditPetForm(pet)}
+            onDelete={() => confirmDeletePet(pet)}
+          >
+            <View style={profileStyles.petCard}>
+              {renderPetPhoto(pet)}
 
-            <View style={profileStyles.petCardBody}>
-              <Text style={profileStyles.petName}>{pet.nome}</Text>
-              <Text style={profileStyles.petMeta}>
-                {pet.especie}{pet.raca ? ` • ${pet.raca}` : ''}
-              </Text>
+              <View style={profileStyles.petCardBody}>
+                <Text style={profileStyles.petName}>{pet.nome}</Text>
+                <Text style={profileStyles.petMeta}>
+                  {pet.especie}{pet.raca ? ` • ${pet.raca}` : ''}
+                </Text>
 
-              <View style={profileStyles.petActions}>
-                <TouchableOpacity onPress={() => openPetDetails(pet)} style={profileStyles.petActionButton}>
-                  <Ionicons name="eye-outline" size={16} color="#0B3C78" />
-                  <Text style={profileStyles.petActionText}>Ver</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => openEditPetForm(pet)} style={profileStyles.petActionButton}>
-                  <Ionicons name="create-outline" size={16} color="#0B3C78" />
-                  <Text style={profileStyles.petActionText}>Editar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => confirmDeletePet(pet)} style={profileStyles.petActionButtonDanger}>
-                  <Ionicons name="trash-outline" size={16} color="#B42318" />
-                  <Text style={profileStyles.petActionTextDanger}>Excluir</Text>
-                </TouchableOpacity>
+                <View style={profileStyles.petActions}>
+                  <TouchableOpacity onPress={() => openPetDetails(pet)} style={profileStyles.petActionButton}>
+                    <Ionicons name="eye-outline" size={16} color="#0B3C78" />
+                    <Text style={profileStyles.petActionText}>Ver</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
+          </SwipeableListItem>
         ))
       )}
     </View>

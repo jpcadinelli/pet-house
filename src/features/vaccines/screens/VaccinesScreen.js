@@ -13,6 +13,7 @@ import {
 
 import VaccineCard from '../components/VaccineCard';
 import VaccineForm from '../components/VaccineForm';
+import SwipeableListItem from '../../../shared/components/SwipeableListItem';
 import { vaccineStyles } from '../../../shared/styles/vaccine.styles';
 
 const petRepository = require('../../pets/services/petRepository');
@@ -309,12 +310,13 @@ export default function VaccinesScreen({ idUsuario }) {
         renderEmptyState()
       ) : (
         vaccines.map((vaccine) => (
-          <VaccineCard
+          <SwipeableListItem
             key={vaccine.id}
-            vaccine={vaccine}
-            onEdit={openEditForm}
-            onDelete={confirmDeleteVaccine}
-          />
+            onEdit={() => openEditForm(vaccine)}
+            onDelete={() => confirmDeleteVaccine(vaccine)}
+          >
+            <VaccineCard vaccine={vaccine} />
+          </SwipeableListItem>
         ))
       )}
     </>

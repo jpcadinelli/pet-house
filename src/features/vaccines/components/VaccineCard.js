@@ -1,5 +1,5 @@
-import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { FontAwesome5 } from '@expo/vector-icons';
+import { Text, View } from 'react-native';
 
 import { vaccineStyles } from '../../../shared/styles/vaccine.styles';
 
@@ -22,7 +22,7 @@ function renderInfo(label, value) {
   );
 }
 
-export default function VaccineCard({ vaccine, onEdit, onDelete }) {
+export default function VaccineCard({ vaccine }) {
   const status = obterDetalhesStatus(vaccine.status);
   const isLate = vaccine.status === VACCINE_STATUS.ATRASADA;
 
@@ -63,25 +63,6 @@ export default function VaccineCard({ vaccine, onEdit, onDelete }) {
         {renderInfo('Observações', vaccine.observacoes)}
       </View>
 
-      <View style={vaccineStyles.actionRow}>
-        <TouchableOpacity
-          style={vaccineStyles.actionButton}
-          onPress={() => onEdit(vaccine)}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="create-outline" size={16} color="#0B3C78" />
-          <Text style={vaccineStyles.actionButtonText}>Editar</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={vaccineStyles.actionButtonDanger}
-          onPress={() => onDelete(vaccine)}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="trash-outline" size={16} color="#B42318" />
-          <Text style={vaccineStyles.actionButtonTextDanger}>Excluir</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
