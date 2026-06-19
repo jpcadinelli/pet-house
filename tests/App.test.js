@@ -11,9 +11,12 @@ const mockGetDB = jest.fn(() => mockDb);
 const mockGetAuthSession = jest.fn();
 const mockSaveAuthSession = jest.fn();
 const mockClearAuthSession = jest.fn();
+const mockAtualizarFirebaseUidUsuario = jest.fn();
 const mockCreateUser = jest.fn();
 const mockGetUserByEmail = jest.fn();
-const mockLoginUser = jest.fn();
+const mockCadastrarUsuarioFirebase = jest.fn();
+const mockLoginUsuarioFirebase = jest.fn();
+const mockSalvarPerfilUsuarioFirebase = jest.fn();
 const mockHomeScreen = jest.fn();
 const mockSecureScreen = jest.fn();
 
@@ -34,9 +37,15 @@ jest.mock('../src/features/auth/storage/authStorage', () => ({
 }));
 
 jest.mock('../src/features/database/consultas/usuario', () => ({
+  atualizarFirebaseUidUsuario: mockAtualizarFirebaseUidUsuario,
   createUser: mockCreateUser,
   getUserByEmail: mockGetUserByEmail,
-  loginUser: mockLoginUser,
+}));
+
+jest.mock('../src/features/firebase/firebaseAuthService', () => ({
+  cadastrarUsuarioFirebase: mockCadastrarUsuarioFirebase,
+  loginUsuarioFirebase: mockLoginUsuarioFirebase,
+  salvarPerfilUsuarioFirebase: mockSalvarPerfilUsuarioFirebase,
 }));
 
 jest.mock('../src/features/home/screens/HomeScreen', () => {
@@ -112,6 +121,10 @@ describe('App', () => {
     mockGetAuthSession.mockResolvedValue(null);
     mockSaveAuthSession.mockResolvedValue(undefined);
     mockClearAuthSession.mockResolvedValue(undefined);
+    mockCadastrarUsuarioFirebase.mockResolvedValue('firebase-uid-cadastro');
+    mockLoginUsuarioFirebase.mockResolvedValue('firebase-uid-login');
+    mockSalvarPerfilUsuarioFirebase.mockResolvedValue(undefined);
+    mockCreateUser.mockReturnValue({ lastInsertRowId: 99, changes: 1 });
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -133,7 +146,7 @@ describe('App', () => {
   });
 
   test('normaliza email, salva sessão e autentica no login por credenciais', async () => {
-    mockLoginUser.mockReturnValueOnce({ id: 7, nome: 'Ana' });
+    mockGetUserByEmail.mockReturnValueOnce({ id: 7, nome: 'Ana', firebase_uid: 'firebase-uid-login' });
     const { getByTestId, getByText } = await render(React.createElement(App));
 
     await waitFor(() => expect(getByTestId('mock-home-screen')).toBeTruthy());
@@ -141,26 +154,28 @@ describe('App', () => {
 
     await waitFor(() => expect(getByTestId('mock-secure-screen')).toBeTruthy());
 
-    expect(mockLoginUser).toHaveBeenCalledWith(mockDb, 'usuario@email.com', 'senha123');
+    expect(mockLoginUsuarioFirebase).toHaveBeenCalledWith('usuario@email.com', 'senha123');
+    expect(mockGetUserByEmail).toHaveBeenCalledWith(mockDb, 'usuario@email.com');
     expect(mockSaveAuthSession).toHaveBeenCalledWith({
       isLoggedIn: true,
       idUsuario: '7',
       nome: 'Ana',
       email: 'usuario@email.com',
       biometricEnabled: true,
+      firebase_uid: 'firebase-uid-login',
       loginMethod: 'biometria',
     });
     expect(getByText('SecureScreen:email_password:7:usuario@email.com:Ana')).toBeTruthy();
   });
 
   test('alerta e mantém login quando credenciais são inválidas', async () => {
-    mockLoginUser.mockReturnValueOnce(null);
+    mockLoginUsuarioFirebase.mockRejectedValueOnce(new Error('Firebase indisponível'));
     const { getByTestId } = await render(React.createElement(App));
 
     await waitFor(() => expect(getByTestId('mock-home-screen')).toBeTruthy());
     await fireEvent.press(getByTestId('credential-login'));
 
-    expect(Alert.alert).toHaveBeenCalledWith('Credenciais invalidas', 'Email ou senha incorretos.');
+    expect(Alert.alert).toHaveBeenCalledWith('Credenciais invalidas', 'Firebase indisponível');
     expect(mockSaveAuthSession).not.toHaveBeenCalled();
     expect(getByTestId('mock-home-screen')).toBeTruthy();
   });
@@ -171,20 +186,42 @@ describe('App', () => {
     await waitFor(() => expect(getByTestId('mock-home-screen')).toBeTruthy());
     await fireEvent.press(getByTestId('register-user'));
 
-    expect(mockCreateUser).toHaveBeenCalledWith(mockDb, 'Ana', 'ana@email.com', 'nova-senha');
+    expect(mockCadastrarUsuarioFirebase).toHaveBeenCalledWith('ana@email.com', 'nova-senha');
+    expect(mockCreateUser).toHaveBeenCalledWith(mockDb, 'Ana', 'ana@email.com', 'nova-senha', 'firebase-uid-cadastro');
+    expect(mockSalvarPerfilUsuarioFirebase).toHaveBeenCalledWith('firebase-uid-cadastro', {
+      nome: 'Ana',
+      email: 'ana@email.com',
+    });
     expect(Alert.alert).toHaveBeenCalledWith('Sucesso', 'Conta criada com sucesso!');
   });
 
-  test('exibe erro quando cadastro falha no banco', async () => {
-    mockCreateUser.mockImplementationOnce(() => {
-      throw new Error('email duplicado');
-    });
+
+  test('vincula conta local antiga ao Firebase durante cadastro sem duplicar usuário local', async () => {
+    mockGetUserByEmail.mockReturnValueOnce({ id: 4, nome: 'Ana Local', email: 'ana@email.com', firebase_uid: null });
     const { getByTestId } = await render(React.createElement(App));
 
     await waitFor(() => expect(getByTestId('mock-home-screen')).toBeTruthy());
     await fireEvent.press(getByTestId('register-user'));
 
-    expect(Alert.alert).toHaveBeenCalledWith('Erro', 'Error: email duplicado');
+    expect(mockCadastrarUsuarioFirebase).toHaveBeenCalledWith('ana@email.com', 'nova-senha');
+    expect(mockAtualizarFirebaseUidUsuario).toHaveBeenCalledWith(mockDb, 4, 'firebase-uid-cadastro');
+    expect(mockCreateUser).not.toHaveBeenCalled();
+    expect(mockSalvarPerfilUsuarioFirebase).toHaveBeenCalledWith('firebase-uid-cadastro', {
+      nome: 'Ana Local',
+      email: 'ana@email.com',
+    });
+    expect(Alert.alert).toHaveBeenCalledWith('Sucesso', 'Conta local vinculada ao Firebase com sucesso!');
+  });
+
+  test('exibe erro quando cadastro falha no Firebase', async () => {
+    mockCadastrarUsuarioFirebase.mockRejectedValueOnce(new Error('email duplicado'));
+    const { getByTestId } = await render(React.createElement(App));
+
+    await waitFor(() => expect(getByTestId('mock-home-screen')).toBeTruthy());
+    await fireEvent.press(getByTestId('register-user'));
+
+    expect(Alert.alert).toHaveBeenCalledWith('Erro', 'email duplicado');
+    expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
   test('migra sessão antiga com userId para idUsuario e entra automaticamente', async () => {

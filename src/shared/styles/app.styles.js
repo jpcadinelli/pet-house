@@ -102,6 +102,9 @@ export const appStyles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
   },
+  buttonDisabled: {
+    opacity: 0.65,
+  },
   buttonText: {
     color: '#fff',
     textAlign: 'center',

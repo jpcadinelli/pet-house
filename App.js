@@ -13,10 +13,15 @@ import {
 import { initDatabase, getDB } from './src/features/database/db';
 
 import {
+  atualizarFirebaseUidUsuario,
   createUser,
   getUserByEmail,
-  loginUser,
 } from './src/features/database/consultas/usuario';
+import {
+  cadastrarUsuarioFirebase,
+  loginUsuarioFirebase,
+  salvarPerfilUsuarioFirebase,
+} from './src/features/firebase/firebaseAuthService';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
@@ -49,6 +54,7 @@ export default function App() {
             ...session,
             idUsuario: String(usuario.id),
             nome: usuario.nome,
+            firebase_uid: usuario.firebase_uid || session.firebase_uid,
           };
           await saveAuthSession(session);
         } else {
@@ -105,53 +111,108 @@ export default function App() {
   }, [authenticated, savedSession, sessionLoaded]);
 
   const handleRegister = async ({ nome, email, password }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
-      createUser(
-        getDB(),
-        nome,
-        email.trim().toLowerCase(),
-        password
-      );
+      const usuarioExistente = getUserByEmail(getDB(), normalizedEmail);
+
+      if (usuarioExistente?.firebase_uid) {
+        Alert.alert('Erro', 'Já existe uma conta local com este email.');
+        return;
+      }
+
+      const firebaseUid = await cadastrarUsuarioFirebase(normalizedEmail, password);
+      const nomePerfil = usuarioExistente?.nome || nome;
+
+      if (usuarioExistente) {
+        atualizarFirebaseUidUsuario(getDB(), usuarioExistente.id, firebaseUid);
+      } else {
+        createUser(
+          getDB(),
+          nome,
+          normalizedEmail,
+          password,
+          firebaseUid
+        );
+      }
+
+      await salvarPerfilUsuarioFirebase(firebaseUid, {
+        nome: nomePerfil,
+        email: normalizedEmail,
+      });
 
       Alert.alert(
         'Sucesso',
-        'Conta criada com sucesso!'
+        usuarioExistente
+          ? 'Conta local vinculada ao Firebase com sucesso!'
+          : 'Conta criada com sucesso!'
       );
     } catch (error) {
       console.error('Erro ao cadastrar:', error);
 
       Alert.alert(
         'Erro',
-        String(error)
+        error instanceof Error ? error.message : String(error)
       );
     }
   };
 
   const handleCredentialLogin = async ({ email, password, biometricEnabled }) => {
     const normalizedEmail = email.trim().toLowerCase();
-    const usuario = loginUser(getDB(), normalizedEmail, password);
 
-    if (!usuario) {
+    try {
+      const firebaseUid = await loginUsuarioFirebase(normalizedEmail, password);
+      let usuario = getUserByEmail(getDB(), normalizedEmail);
+
+      if (usuario?.firebase_uid && usuario.firebase_uid !== firebaseUid) {
+        Alert.alert(
+          'Conta divergente',
+          'Usuário Firebase diferente do usuário local. Faça logout e login novamente.'
+        );
+        return;
+      }
+
+      if (usuario && !usuario.firebase_uid) {
+        atualizarFirebaseUidUsuario(getDB(), usuario.id, firebaseUid);
+        usuario = {
+          ...usuario,
+          firebase_uid: firebaseUid,
+        };
+      }
+
+      if (!usuario) {
+        const nomeBasico = normalizedEmail.split('@')[0] || 'Usuário';
+        const resultado = createUser(getDB(), nomeBasico, normalizedEmail, password, firebaseUid);
+        usuario = {
+          id: resultado.lastInsertRowId,
+          nome: nomeBasico,
+          email: normalizedEmail,
+          firebase_uid: firebaseUid,
+        };
+      }
+
+      const nextSession = {
+        isLoggedIn: true,
+        idUsuario: String(usuario.id),
+        nome: usuario.nome,
+        email: normalizedEmail,
+        firebase_uid: firebaseUid,
+        biometricEnabled,
+        loginMethod: biometricEnabled ? 'biometria' : 'email_password',
+      };
+
+      await saveAuthSession(nextSession);
+      setSavedSession(nextSession);
+      setAuthMethod('email_password');
+      setAuthenticated(true);
+    } catch (error) {
       Alert.alert(
         'Credenciais invalidas',
-        'Email ou senha incorretos.'
+        error instanceof Error
+          ? error.message
+          : 'Email ou senha incorretos. Faça login com internet para validar sua conta no Firebase.'
       );
-      return;
     }
-
-    const nextSession = {
-      isLoggedIn: true,
-      idUsuario: String(usuario.id),
-      nome: usuario.nome,
-      email: normalizedEmail,
-      biometricEnabled,
-      loginMethod: biometricEnabled ? 'biometria' : 'email_password',
-    };
-
-    await saveAuthSession(nextSession);
-    setSavedSession(nextSession);
-    setAuthMethod('email_password');
-    setAuthenticated(true);
   };
 
   const handleLogout = async () => {

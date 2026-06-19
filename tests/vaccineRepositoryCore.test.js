@@ -16,9 +16,9 @@ function criarPet(id, idUsuario, nome) {
   };
 }
 
-function falharSeUsarCamposDeSincronizacao(sql) {
-  if (/sincronizado|excluido_em/i.test(sql)) {
-    throw new Error(`SQL não deve usar sincronização: ${sql}`);
+function falharSeVacinaUsarCamposDeSincronizacao(sql) {
+  if (/vacinas/i.test(sql) && /sincronizado|excluido_em/i.test(sql)) {
+    throw new Error(`SQL de vacinas não deve usar sincronização: ${sql}`);
   }
 }
 
@@ -42,7 +42,7 @@ function criarBancoEmMemoria() {
 
   return {
     getAllSync(sql, params = []) {
-      falharSeUsarCamposDeSincronizacao(sql);
+      falharSeVacinaUsarCamposDeSincronizacao(sql);
 
       if (!/FROM vacinas/.test(sql)) {
         throw new Error(`SQL não suportado no teste: ${sql}`);
@@ -56,7 +56,7 @@ function criarBancoEmMemoria() {
         .filter(Boolean);
     },
     getFirstSync(sql, params = []) {
-      falharSeUsarCamposDeSincronizacao(sql);
+      falharSeVacinaUsarCamposDeSincronizacao(sql);
 
       if (/sqlite_master/.test(sql)) {
         return { name: 'vacinas' };
@@ -81,7 +81,7 @@ function criarBancoEmMemoria() {
       throw new Error(`SQL não suportado no teste: ${sql}`);
     },
     runSync(sql, params = []) {
-      falharSeUsarCamposDeSincronizacao(sql);
+      falharSeVacinaUsarCamposDeSincronizacao(sql);
 
       if (/INSERT INTO vacinas/.test(sql)) {
         const [
