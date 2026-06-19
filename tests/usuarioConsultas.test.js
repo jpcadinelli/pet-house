@@ -1,9 +1,12 @@
 const { beforeEach, describe, expect, jest, test } = require('@jest/globals');
 
 const {
+  atualizarFirebaseUidUsuario,
+  buscarUsuarioPorId,
   createUser,
   getUserByEmail,
   loginUser,
+  marcarUsuarioSincronizado,
 } = require('../src/features/database/consultas/usuario');
 
 function criarDbFake() {
@@ -42,14 +45,61 @@ describe('consultas de usuário', () => {
     );
   });
 
-  test('createUser insere nome, email e senha informados', () => {
+  test('buscarUsuarioPorId busca usuário pelo id local', () => {
+    const usuario = { id: 2, email: 'bob@email.com' };
+    db.getFirstSync.mockReturnValueOnce(usuario);
+
+    expect(buscarUsuarioPorId(db, 2)).toBe(usuario);
+    expect(db.getFirstSync).toHaveBeenCalledWith(
+      'SELECT * FROM usuarios WHERE id = ?',
+      [2]
+    );
+  });
+
+  test('createUser insere nome, email, senha, firebase_uid e timestamps', () => {
     const resultado = { lastInsertRowId: 3, changes: 1 };
+    const dateNowOriginal = Date.now;
+    Date.now = () => 1700000000000;
     db.runSync.mockReturnValueOnce(resultado);
 
-    expect(createUser(db, 'Carla', 'carla@email.com', 'senha-segura')).toBe(resultado);
+    try {
+      expect(createUser(db, 'Carla', 'carla@email.com', 'senha-segura', 'firebase-uid')).toBe(resultado);
+    } finally {
+      Date.now = dateNowOriginal;
+    }
+
     expect(db.runSync).toHaveBeenCalledWith(
-      'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
-      ['Carla', 'carla@email.com', 'senha-segura']
+      'INSERT INTO usuarios (nome, email, senha, firebase_uid, atualizado_em, sincronizado_em) VALUES (?, ?, ?, ?, ?, ?)',
+      ['Carla', 'carla@email.com', 'senha-segura', 'firebase-uid', 1700000000000, 1700000000000]
+    );
+  });
+
+  test('atualizarFirebaseUidUsuario vincula uid remoto e atualizado_em', () => {
+    const resultado = { changes: 1 };
+    const dateNowOriginal = Date.now;
+    Date.now = () => 1700000000000;
+    db.runSync.mockReturnValueOnce(resultado);
+
+    try {
+      expect(atualizarFirebaseUidUsuario(db, 7, 'firebase-uid')).toBe(resultado);
+    } finally {
+      Date.now = dateNowOriginal;
+    }
+
+    expect(db.runSync).toHaveBeenCalledWith(
+      'UPDATE usuarios SET firebase_uid = ?, atualizado_em = ? WHERE id = ?',
+      ['firebase-uid', 1700000000000, 7]
+    );
+  });
+
+  test('marcarUsuarioSincronizado atualiza sincronizado_em', () => {
+    const resultado = { changes: 1 };
+    db.runSync.mockReturnValueOnce(resultado);
+
+    expect(marcarUsuarioSincronizado(db, 7, 1700000100000)).toBe(resultado);
+    expect(db.runSync).toHaveBeenCalledWith(
+      'UPDATE usuarios SET sincronizado_em = ? WHERE id = ?',
+      [1700000100000, 7]
     );
   });
 });

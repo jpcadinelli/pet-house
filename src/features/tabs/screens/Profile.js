@@ -23,6 +23,8 @@ import CalendarDateInput, {
 import SwipeableListItem from '../../../shared/components/SwipeableListItem';
 import { appStyles } from '../../../shared/styles/app.styles';
 import { profileStyles } from '../../../shared/styles/profile.styles';
+import { sincronizarDadosUsuario } from '../../sync/services/syncService';
+import { sincronizarAposPersistencia } from '../../sync/services/autoSyncService';
 
 const DISTANCIA_CAMPO_ATIVO_TOPO = 12;
 const ATRASOS_ROLAGEM_TECLADO_MS = [80, 320, 620];
@@ -87,6 +89,8 @@ export default function Profile({
   const [editingPet, setEditingPet] = useState(null);
   const [petForm, setPetForm] = useState(criarFormularioPetVazio);
   const [petFormErrors, setPetFormErrors] = useState({});
+  const [syncing, setSyncing] = useState(false);
+  const [lastSyncMessage, setLastSyncMessage] = useState('');
 
   const scrollViewRef = useRef(null);
   const activePetFormFieldRef = useRef(null);
@@ -291,6 +295,33 @@ export default function Profile({
     }, delay));
   }
 
+  const handleSync = async () => {
+    if (!idUsuario || syncing) {
+      return;
+    }
+
+    setSyncing(true);
+    setLastSyncMessage('Sincronizando dados...');
+
+    try {
+      const resumo = await sincronizarDadosUsuario(idUsuario);
+      loadPets();
+      setLastSyncMessage(resumo.mensagem);
+      Alert.alert('Sincronização concluída', resumo.mensagem);
+    } catch (error) {
+      const rawMessage = error instanceof Error
+        ? error.message
+        : 'Não foi possível sincronizar os dados agora.';
+      const message = rawMessage.includes('Sessão Firebase') || rawMessage.includes('vinculada ao Firebase')
+        ? 'Para sincronizar, faça login novamente com internet para validar sua conta no Firebase.'
+        : rawMessage;
+      setLastSyncMessage(message);
+      Alert.alert('Erro ao sincronizar', message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleSavePet = () => {
     const validacao = validarPet(petForm);
     setPetFormErrors(validacao.erros);
@@ -301,6 +332,8 @@ export default function Profile({
     }
 
     try {
+      const motivoSync = editingPet ? 'pet_updated' : 'pet_created';
+
       if (editingPet) {
         petRepository.atualizarPet(editingPet.id, idUsuario, petForm);
         Alert.alert('Sucesso', 'Pet atualizado com sucesso.');
@@ -311,6 +344,7 @@ export default function Profile({
 
       loadPets();
       backToPetsList();
+      sincronizarAposPersistencia(idUsuario, motivoSync);
     } catch (error) {
       console.log('Erro ao salvar pet:', error);
       Alert.alert('Erro', error instanceof Error ? error.message : 'Não foi possível salvar o pet.');
@@ -322,7 +356,8 @@ export default function Profile({
       petRepository.excluirPet(pet.id, idUsuario);
       loadPets();
       backToPetsList();
-      Alert.alert('Pet excluído', 'O pet foi removido definitivamente.');
+      sincronizarAposPersistencia(idUsuario, 'pet_deleted');
+      Alert.alert('Pet excluído', 'O pet foi removido da listagem.');
     } catch (error) {
       console.log('Erro ao excluir pet:', error);
       Alert.alert('Erro', 'Não foi possível excluir o pet.');
@@ -778,6 +813,23 @@ export default function Profile({
         <Text style={appStyles.bodyText}>
           {authMethod === 'biometria' ? 'Biometria' : 'Email e senha'}
         </Text>
+
+        <View style={profileStyles.spacer} />
+
+        <TouchableOpacity
+          style={[appStyles.button, syncing && appStyles.buttonDisabled]}
+          onPress={handleSync}
+          activeOpacity={0.85}
+          disabled={!idUsuario || syncing}
+        >
+          <Text style={appStyles.buttonText}>
+            {syncing ? 'Sincronizando...' : 'Sincronizar agora'}
+          </Text>
+        </TouchableOpacity>
+
+        {lastSyncMessage ? (
+          <Text style={appStyles.helperText}>{lastSyncMessage}</Text>
+        ) : null}
       </View>
 
         {petsView === 'details' ? renderPetDetails() : null}
