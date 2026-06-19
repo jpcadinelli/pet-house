@@ -24,6 +24,7 @@ import SwipeableListItem from '../../../shared/components/SwipeableListItem';
 import { appStyles } from '../../../shared/styles/app.styles';
 import { profileStyles } from '../../../shared/styles/profile.styles';
 import { sincronizarDadosUsuario } from '../../sync/services/syncService';
+import { sincronizarAposPersistencia } from '../../sync/services/autoSyncService';
 
 const DISTANCIA_CAMPO_ATIVO_TOPO = 12;
 const ATRASOS_ROLAGEM_TECLADO_MS = [80, 320, 620];
@@ -331,6 +332,8 @@ export default function Profile({
     }
 
     try {
+      const motivoSync = editingPet ? 'pet_updated' : 'pet_created';
+
       if (editingPet) {
         petRepository.atualizarPet(editingPet.id, idUsuario, petForm);
         Alert.alert('Sucesso', 'Pet atualizado com sucesso.');
@@ -341,6 +344,7 @@ export default function Profile({
 
       loadPets();
       backToPetsList();
+      sincronizarAposPersistencia(idUsuario, motivoSync);
     } catch (error) {
       console.log('Erro ao salvar pet:', error);
       Alert.alert('Erro', error instanceof Error ? error.message : 'Não foi possível salvar o pet.');
@@ -352,7 +356,8 @@ export default function Profile({
       petRepository.excluirPet(pet.id, idUsuario);
       loadPets();
       backToPetsList();
-      Alert.alert('Pet excluído', 'O pet foi removido definitivamente.');
+      sincronizarAposPersistencia(idUsuario, 'pet_deleted');
+      Alert.alert('Pet excluído', 'O pet foi removido da listagem.');
     } catch (error) {
       console.log('Erro ao excluir pet:', error);
       Alert.alert('Erro', 'Não foi possível excluir o pet.');

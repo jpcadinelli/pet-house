@@ -24,10 +24,10 @@ const { criarSyncService } = require('../src/features/sync/services/syncService'
 function criarSnapshot(remotos) {
   return {
     forEach(callback) {
-      remotos.forEach((pet) => {
+      remotos.forEach((registro) => {
         callback({
-          id: pet.uuid,
-          data: () => pet,
+          id: registro.uuid,
+          data: () => registro,
         });
       });
     },
@@ -38,7 +38,10 @@ function criarDependencias({
   usuario = {},
   petsPendentes = [],
   petsRemotos = [],
+  vacinasPendentes = [],
+  vacinasRemotas = [],
   upsertStatus = 'inserted',
+  vacinaUpsertStatus = 'inserted',
   authenticatedUid = usuario.firebase_uid || 'firebase-uid-1',
 } = {}) {
   const database = { name: 'db-fake' };
@@ -64,7 +67,10 @@ function criarDependencias({
     setDoc: jest.fn(async (ref, data, options) => {
       docsGravados.push({ ref, data, options });
     }),
-    getDocs: jest.fn(async () => criarSnapshot(petsRemotos)),
+    getDocs: jest.fn(async (collectionRef) => {
+      const nomeColecao = collectionRef.path[collectionRef.path.length - 1];
+      return criarSnapshot(nomeColecao === 'vacinas' ? vacinasRemotas : petsRemotos);
+    }),
   };
   const usuarioConsultas = {
     buscarUsuarioPorId: jest.fn(() => usuarioLocal),
@@ -75,6 +81,11 @@ function criarDependencias({
     listarPetsPendentesSincronizacao: jest.fn(() => petsPendentes),
     marcarPetComoSincronizado: jest.fn(() => 1),
     upsertPetSincronizado: jest.fn(() => ({ status: upsertStatus })),
+  };
+  const vacinasConsultas = {
+    listarVacinasPendentesSincronizacao: jest.fn(() => vacinasPendentes),
+    marcarVacinaComoSincronizada: jest.fn(() => 1),
+    upsertVacinaSincronizada: jest.fn(() => ({ status: vacinaUpsertStatus })),
   };
   const garantirUsuarioFirebaseAutenticado = jest.fn(() => ({ uid: authenticatedUid }));
 
@@ -87,6 +98,7 @@ function criarDependencias({
     petsConsultas,
     refs,
     usuarioConsultas,
+    vacinasConsultas,
   };
 }
 
@@ -130,6 +142,40 @@ describe('syncService', () => {
     expect(resumo.enviados).toBe(1);
   });
 
+  test('envia vacina pendente e marca como sincronizada', async () => {
+    const vacinaPendente = {
+      uuid: 'vacina-1',
+      pet_uuid: 'pet-1',
+      id_pet: 1,
+      nome: 'Antirrábica',
+      data_aplicacao: new Date(1700000000000),
+      proxima_dose: new Date(1800000000000),
+      observacoes: null,
+      status: 'ok',
+      criado_em: new Date(1700000000000),
+      atualizado_em: new Date(1700000100000),
+      excluido_em: null,
+    };
+    const deps = criarDependencias({ vacinasPendentes: [vacinaPendente] });
+    const service = criarSyncService(deps);
+
+    const resumo = await service.sincronizarDadosUsuario(7);
+
+    expect(deps.firestoreApi.setDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: [deps.firestore, 'usuarios', 'firebase-uid-1', 'vacinas', 'vacina-1'] }),
+      expect.objectContaining({ uuid: 'vacina-1', pet_uuid: 'pet-1', nome: 'Antirrábica' }),
+      { merge: true }
+    );
+    expect(deps.vacinasConsultas.marcarVacinaComoSincronizada).toHaveBeenCalledWith(
+      deps.database,
+      '7',
+      'vacina-1',
+      expect.any(Number),
+      expect.any(Number)
+    );
+    expect(resumo.enviados).toBe(1);
+  });
+
   test('recebe pet remoto e faz upsert local', async () => {
     const petRemoto = {
       uuid: 'pet-remoto',
@@ -153,6 +199,31 @@ describe('syncService', () => {
       deps.database,
       '7',
       expect.objectContaining({ uuid: 'pet-remoto', nome: 'Mel' })
+    );
+    expect(resumo.recebidos).toBe(1);
+  });
+
+  test('recebe vacina remota e faz upsert local', async () => {
+    const vacinaRemota = {
+      uuid: 'vacina-remota',
+      pet_uuid: 'pet-remoto',
+      nome: 'V10',
+      atualizado_em: 1700000200000,
+      firebase_atualizado_em: 1700000200000,
+    };
+    const deps = criarDependencias({
+      usuario: { firebase_uid: 'firebase-uid-existente' },
+      authenticatedUid: 'firebase-uid-existente',
+      vacinasRemotas: [vacinaRemota],
+    });
+    const service = criarSyncService(deps);
+
+    const resumo = await service.sincronizarDadosUsuario(7);
+
+    expect(deps.vacinasConsultas.upsertVacinaSincronizada).toHaveBeenCalledWith(
+      deps.database,
+      '7',
+      expect.objectContaining({ uuid: 'vacina-remota', nome: 'V10' })
     );
     expect(resumo.recebidos).toBe(1);
   });

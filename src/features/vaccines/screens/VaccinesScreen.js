@@ -15,6 +15,7 @@ import VaccineCard from '../components/VaccineCard';
 import VaccineForm from '../components/VaccineForm';
 import SwipeableListItem from '../../../shared/components/SwipeableListItem';
 import { vaccineStyles } from '../../../shared/styles/vaccine.styles';
+import { sincronizarAposPersistencia } from '../../sync/services/autoSyncService';
 
 const petRepository = require('../../pets/services/petRepository');
 const vaccineRepository = require('../services/vaccineRepository');
@@ -147,6 +148,8 @@ export default function VaccinesScreen({ idUsuario }) {
     }
 
     try {
+      const motivoSync = editingVaccine ? 'vaccine_updated' : 'vaccine_created';
+
       if (editingVaccine) {
         vaccineRepository.updateVaccine(idUsuario, editingVaccine.id, vaccineForm);
         Alert.alert('Sucesso', 'Vacina atualizada com sucesso.');
@@ -162,6 +165,7 @@ export default function VaccinesScreen({ idUsuario }) {
       setVaccineForm(criarFormularioVacinaVazio(nextPetId));
       setVaccineFormErrors({});
       loadVaccinesForPet(nextPetId);
+      sincronizarAposPersistencia(idUsuario, motivoSync);
     } catch (error) {
       console.log('Erro ao salvar vacina:', error);
       Alert.alert(
@@ -175,6 +179,7 @@ export default function VaccinesScreen({ idUsuario }) {
     try {
       vaccineRepository.deleteVaccine(idUsuario, vaccine.id);
       loadVaccinesForPet(selectedPetId);
+      sincronizarAposPersistencia(idUsuario, 'vaccine_deleted');
       Alert.alert('Vacina excluída', 'A vacina foi removida da listagem.');
     } catch (error) {
       console.log('Erro ao excluir vacina:', error);

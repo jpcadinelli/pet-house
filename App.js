@@ -1,8 +1,8 @@
 import * as LocalAuthentication from 'expo-local-authentication';
-import { Alert, StyleSheet } from 'react-native';
+import { Alert, AppState, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SecureScreen } from './src/features/auth/screens/SecureScreen';
 import { HomeScreen } from './src/features/home/screens/HomeScreen';
 import {
@@ -22,6 +22,10 @@ import {
   loginUsuarioFirebase,
   salvarPerfilUsuarioFirebase,
 } from './src/features/firebase/firebaseAuthService';
+import {
+  sincronizarAoAbrirApp,
+  sincronizarAoVoltarParaPrimeiroPlano,
+} from './src/features/sync/services/autoSyncService';
 
 export default function App() {
   const [biometria, setBiometria] = useState(false);
@@ -29,6 +33,7 @@ export default function App() {
   const [authMethod, setAuthMethod] = useState(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const [savedSession, setSavedSession] = useState(null);
+  const appStateRef = useRef(AppState.currentState);
 
   useEffect(() => {
     (async () => {
@@ -78,6 +83,7 @@ export default function App() {
 
       setAuthMethod('email_password');
       setAuthenticated(true);
+      sincronizarAoAbrirApp(session.idUsuario);
       setSessionLoaded(true);
     })();
   }, []);
@@ -97,6 +103,7 @@ export default function App() {
     if (authentication.success) {
       setAuthMethod('biometria');
       setAuthenticated(true);
+      sincronizarAoAbrirApp(savedSession?.idUsuario);
     } else {
       Alert.alert('Falha na autenticacao', 'Nao foi possivel realizar o login.');
     }
@@ -205,6 +212,7 @@ export default function App() {
       setSavedSession(nextSession);
       setAuthMethod('email_password');
       setAuthenticated(true);
+      sincronizarAoAbrirApp(nextSession.idUsuario);
     } catch (error) {
       Alert.alert(
         'Credenciais invalidas',
@@ -214,6 +222,23 @@ export default function App() {
       );
     }
   };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      const wasInactive = /inactive|background/.test(appStateRef.current);
+      const isActiveNow = nextAppState === 'active';
+
+      if (wasInactive && isActiveNow && authenticated && savedSession?.idUsuario) {
+        sincronizarAoVoltarParaPrimeiroPlano(savedSession.idUsuario);
+      }
+
+      appStateRef.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [authenticated, savedSession?.idUsuario]);
 
   const handleLogout = async () => {
     await clearAuthSession();

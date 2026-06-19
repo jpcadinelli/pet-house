@@ -17,6 +17,9 @@ const mockGetUserByEmail = jest.fn();
 const mockCadastrarUsuarioFirebase = jest.fn();
 const mockLoginUsuarioFirebase = jest.fn();
 const mockSalvarPerfilUsuarioFirebase = jest.fn();
+const mockSincronizarAoAbrirApp = jest.fn();
+const mockSincronizarAoVoltarParaPrimeiroPlano = jest.fn();
+const mockSincronizarAposPersistencia = jest.fn();
 const mockHomeScreen = jest.fn();
 const mockSecureScreen = jest.fn();
 
@@ -46,6 +49,12 @@ jest.mock('../src/features/firebase/firebaseAuthService', () => ({
   cadastrarUsuarioFirebase: mockCadastrarUsuarioFirebase,
   loginUsuarioFirebase: mockLoginUsuarioFirebase,
   salvarPerfilUsuarioFirebase: mockSalvarPerfilUsuarioFirebase,
+}));
+
+jest.mock('../src/features/sync/services/autoSyncService', () => ({
+  sincronizarAoAbrirApp: mockSincronizarAoAbrirApp,
+  sincronizarAoVoltarParaPrimeiroPlano: mockSincronizarAoVoltarParaPrimeiroPlano,
+  sincronizarAposPersistencia: mockSincronizarAposPersistencia,
 }));
 
 jest.mock('../src/features/home/screens/HomeScreen', () => {
@@ -141,6 +150,7 @@ describe('App', () => {
     expect(mockInitDatabase).toHaveBeenCalledTimes(1);
     expect(mockHasHardwareAsync).toHaveBeenCalledTimes(1);
     expect(mockGetAuthSession).toHaveBeenCalledTimes(1);
+    expect(mockSincronizarAoAbrirApp).not.toHaveBeenCalled();
     expect(getByText('HomeScreen biometria:true')).toBeTruthy();
     expect(getByText('Sessao biometrica:false')).toBeTruthy();
   });
@@ -165,6 +175,7 @@ describe('App', () => {
       firebase_uid: 'firebase-uid-login',
       loginMethod: 'biometria',
     });
+    expect(mockSincronizarAoAbrirApp).toHaveBeenCalledWith('7');
     expect(getByText('SecureScreen:email_password:7:usuario@email.com:Ana')).toBeTruthy();
   });
 
@@ -243,6 +254,7 @@ describe('App', () => {
       biometricEnabled: false,
       idUsuario: 12,
     });
+    expect(mockSincronizarAoAbrirApp).toHaveBeenCalledWith(12);
     expect(getByText('SecureScreen:email_password:12:bia@email.com:Bia')).toBeTruthy();
   });
 
@@ -275,6 +287,7 @@ describe('App', () => {
     await waitFor(() => expect(mockAuthenticateAsync).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(getByTestId('mock-secure-screen')).toBeTruthy());
 
+    expect(mockSincronizarAoAbrirApp).toHaveBeenCalledWith('8');
     expect(getByText('SecureScreen:biometria:8:caio@email.com:Caio')).toBeTruthy();
   });
 

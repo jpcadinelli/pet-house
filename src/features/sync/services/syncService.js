@@ -14,6 +14,7 @@ import { firestoreDb } from '../../firebase/firebaseConfig';
 import { garantirUsuarioFirebaseAutenticado } from '../../firebase/firebaseAuthService';
 
 const consultasPets = require('../../database/consultas/pets');
+const consultasVacinas = require('../../database/consultas/vacinas');
 
 function normalizarIdUsuario(idUsuario) {
   const idNormalizado = String(idUsuario || '').trim();
@@ -64,6 +65,23 @@ function serializarPetLocal(pet, firebaseAtualizadoEm) {
   };
 }
 
+function serializarVacinaLocal(vacina, firebaseAtualizadoEm) {
+  return {
+    uuid: vacina.uuid,
+    pet_uuid: vacina.pet_uuid,
+    id_pet: vacina.id_pet,
+    nome: vacina.nome,
+    data_aplicacao: timestamp(vacina.data_aplicacao),
+    proxima_dose: timestamp(vacina.proxima_dose),
+    observacoes: vacina.observacoes || null,
+    status: vacina.status,
+    criado_em: timestamp(vacina.criado_em) || Date.now(),
+    atualizado_em: timestamp(vacina.atualizado_em) || Date.now(),
+    excluido_em: timestamp(vacina.excluido_em),
+    firebase_atualizado_em: firebaseAtualizadoEm,
+  };
+}
+
 function normalizarPetRemoto(snapshot) {
   const data = snapshot.data();
 
@@ -71,6 +89,22 @@ function normalizarPetRemoto(snapshot) {
     ...data,
     uuid: data.uuid || snapshot.id,
     data_nascimento: timestamp(data.data_nascimento),
+    criado_em: timestamp(data.criado_em),
+    atualizado_em: timestamp(data.atualizado_em),
+    excluido_em: timestamp(data.excluido_em),
+    firebase_atualizado_em: timestamp(data.firebase_atualizado_em || data.atualizado_em),
+    sincronizado_em: Date.now(),
+  };
+}
+
+function normalizarVacinaRemota(snapshot) {
+  const data = snapshot.data();
+
+  return {
+    ...data,
+    uuid: data.uuid || snapshot.id,
+    data_aplicacao: timestamp(data.data_aplicacao),
+    proxima_dose: timestamp(data.proxima_dose),
     criado_em: timestamp(data.criado_em),
     atualizado_em: timestamp(data.atualizado_em),
     excluido_em: timestamp(data.excluido_em),
@@ -99,6 +133,7 @@ export function criarSyncService(deps = {}) {
     marcarUsuarioSincronizado,
   };
   const petsConsultas = deps.petsConsultas || consultasPets;
+  const vacinasConsultas = deps.vacinasConsultas || consultasVacinas;
 
   async function sincronizarDadosUsuario(idUsuario) {
     const idUsuarioNormalizado = normalizarIdUsuario(idUsuario);
@@ -167,6 +202,35 @@ export function criarSyncService(deps = {}) {
       }
     }
 
+    const uuidsVacinasEnviadas = new Set();
+    const vacinasPendentes = vacinasConsultas.listarVacinasPendentesSincronizacao(
+      database,
+      idUsuarioNormalizado
+    );
+
+    for (const vacina of vacinasPendentes) {
+      const firebaseAtualizadoEm = Date.now();
+      const vacinaRef = firestoreApi.doc(firestore, 'usuarios', firebaseUid, 'vacinas', vacina.uuid);
+      const vacinaRemota = serializarVacinaLocal(vacina, firebaseAtualizadoEm);
+
+      await firestoreApi.setDoc(vacinaRef, vacinaRemota, { merge: true });
+      vacinasConsultas.marcarVacinaComoSincronizada(
+        database,
+        idUsuarioNormalizado,
+        vacina.uuid,
+        sincronizadoEm,
+        firebaseAtualizadoEm
+      );
+
+      uuidsVacinasEnviadas.add(vacina.uuid);
+
+      if (vacina.excluido_em) {
+        resumo.excluidos += 1;
+      } else {
+        resumo.enviados += 1;
+      }
+    }
+
     const petsCollection = firestoreApi.collection(firestore, 'usuarios', firebaseUid, 'pets');
     const remoteSnapshot = await firestoreApi.getDocs(petsCollection);
 
@@ -184,6 +248,31 @@ export function criarSyncService(deps = {}) {
       }
 
       if (!uuidsEnviados.has(petRemoto.uuid)) {
+        if (resultado.status === 'deleted') {
+          resumo.excluidos += 1;
+        } else {
+          resumo.recebidos += 1;
+        }
+      }
+    });
+
+    const vacinasCollection = firestoreApi.collection(firestore, 'usuarios', firebaseUid, 'vacinas');
+    const remoteVaccinesSnapshot = await firestoreApi.getDocs(vacinasCollection);
+
+    remoteVaccinesSnapshot.forEach((vacinaSnapshot) => {
+      const vacinaRemota = normalizarVacinaRemota(vacinaSnapshot);
+      const resultado = vacinasConsultas.upsertVacinaSincronizada(
+        database,
+        idUsuarioNormalizado,
+        vacinaRemota
+      );
+
+      if (resultado.status === 'ignored') {
+        resumo.conflitosIgnorados += 1;
+        return;
+      }
+
+      if (!uuidsVacinasEnviadas.has(vacinaRemota.uuid)) {
         if (resultado.status === 'deleted') {
           resumo.excluidos += 1;
         } else {
