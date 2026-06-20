@@ -6,18 +6,21 @@ export default {
     slug: 'pet-house',
     version: '1.0.0',
     orientation: 'portrait',
+    android: {
+      package: "com.pethouse.app",
+      versionCode: 1
+    },
 
     icon: './assets/icon-pet-house.png',
 
+    "extra": {
+      "eas": {
+          "projectId": "3999cfc3-5912-4249-bb9d-65c99e3976eb"
+        }
+      }
+    },
+
     plugins: [
-      [
-        'expo-splash-screen',
-        {
-          image: './assets/splash-full.png',
-          resizeMode: 'cover',
-          backgroundColor: '#ffffff',
-        },
-      ],
       [
         'expo-location',
         {
@@ -64,5 +67,4 @@ export default {
     web: {
       favicon: './assets/icon-pet-house.png',
     },
-  },
-};
+  };
